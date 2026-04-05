@@ -1,0 +1,859 @@
+% ============================================================
+%  Artículo Académico — Herramienta WHO_AM_I — MPU6050 / ESP32
+%  Universidad del Cauca — Departamento de Ingeniería
+%  Electrónica y Telecomunicaciones
+%  Autor: Carlos Daniel Cuellar Antury
+%  6 páginas — Formato doble columna, 10pt, Times New Roman
+% ============================================================
+\documentclass[10pt,twocolumn,a4paper]{article}
+
+% --- Paquetes -----------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{mathptmx}
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,
+            columnsep=0.6cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{url}
+
+% --- Estilo de página ---------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\tiny Univ. del Cauca — Ing. Electrónica y Telecomunicaciones}
+\fancyhead[R]{\tiny Cuellar Antury, C.D. (2024)}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{14pt}
+
+% --- Formato de secciones -----------------------------------------------
+\titleformat{\section}{\normalfont\bfseries\small}{\thesection.}{0.4em}{}
+\titleformat{\subsection}{\normalfont\bfseries\footnotesize}{\thesubsection.}{0.4em}{}
+\titleformat{\subsubsection}{\normalfont\itshape\footnotesize}{\thesubsubsection.}{0.4em}{}
+\titlespacing{\section}{0pt}{5pt}{2pt}
+\titlespacing{\subsection}{0pt}{4pt}{1pt}
+\titlespacing{\subsubsection}{0pt}{3pt}{1pt}
+
+% --- Listas compactas ---------------------------------------------------
+\setlist{itemsep=1pt,topsep=2pt,parsep=0pt,partopsep=0pt}
+
+% --- Colores para código ------------------------------------------------
+\definecolor{codegray}{rgb}{0.96,0.96,0.96}
+\definecolor{codeblue}{rgb}{0.0,0.0,0.55}
+\definecolor{codegreen}{rgb}{0.0,0.45,0.0}
+\definecolor{codepurple}{rgb}{0.45,0.0,0.45}
+\definecolor{codered}{rgb}{0.6,0.0,0.0}
+
+\lstdefinestyle{arduino}{
+  language=C++,
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  stringstyle=\color{codepurple},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  stepnumber=1,
+  numbersep=4pt,
+  breaklines=true,
+  showspaces=false,
+  showstringspaces=false,
+  frame=single,
+  rulecolor=\color{black!20},
+  tabsize=2,
+  captionpos=b,
+  aboveskip=4pt,
+  belowskip=2pt,
+  morekeywords={uint8\_t,Wire,Serial}
+}
+
+\lstdefinestyle{output}{
+  basicstyle=\ttfamily\scriptsize,
+  backgroundcolor=\color{black!5},
+  frame=single,
+  numbers=none,
+  captionpos=b,
+  aboveskip=3pt,
+  belowskip=2pt,
+  breaklines=true
+}
+
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
+            breaklinks=true}
+\captionsetup{font=scriptsize,labelfont=bf,skip=3pt}
+
+% ========================================================================
+\begin{document}
+
+% -----------------------------------------------------------------------
+%  PORTADA — TÍTULO, AUTOR, AFILIACIÓN, ABSTRACT (una columna)
+% -----------------------------------------------------------------------
+\twocolumn[{%
+\begin{center}
+  {\large\bfseries Herramienta de Diagnóstico de Sensor MPU6050 mediante\\[2pt]
+  Identificación de ID Interno en Plataforma ESP32}\\[6pt]
+  {\normalsize Carlos Daniel Cuellar Antury}\\[2pt]
+  {\small Departamento de Ingeniería Electrónica y Telecomunicaciones,
+  Universidad del Cauca, Popayán, Colombia}\\[2pt]
+  {\footnotesize\url{https://github.com/Cdcuellar/Sistemas-embebidos---Actividades-de-la-vida-diaria}}\\[6pt]
+  \rule{\linewidth}{0.5pt}\\[4pt]
+\end{center}
+\begin{small}
+\noindent\textbf{Resumen} — Este artículo presenta el diseño, implementación y
+validación de una herramienta de diagnóstico de hardware para el sensor MPU6050
+sobre la plataforma ESP32 DevKit V1, desarrollada en el marco del proyecto de
+sistemas wearables para monitoreo de Actividades de la Vida Diaria (AVD) en la
+Universidad del Cauca. La herramienta lee el registro \texttt{WHO\_AM\_I}
+(dirección \texttt{0x75}) mediante el protocolo I2C utilizando la biblioteca
+nativa \texttt{Wire.h} del entorno Arduino IDE, con pines GPIO~21 (SDA) y
+GPIO~22 (SCL), a una velocidad serial de 115\,200~baudios. El resultado
+experimental arroja el valor \texttt{0x72} como identificador de silicio, que
+difiere del \texttt{0x68} estándar indicado en la hoja de datos oficial de
+InvenSense/TDK. Este hallazgo es crítico para la correcta configuración del
+driver de bajo nivel en ESP-IDF. Se presentan tablas de especificaciones,
+análisis del flujo I2C, listado del código fuente comentado y tabla de
+diagnóstico de resultados posibles.
+
+\smallskip
+\noindent\textbf{Palabras clave} — MPU6050, WHO\_AM\_I, I2C, ESP32, diagnóstico
+de hardware, sistemas embebidos, wearables, actividades de la vida diaria.
+
+\smallskip
+\noindent\textbf{Abstract} — This paper presents the design, implementation, and
+validation of a hardware diagnostic tool for the MPU6050 sensor on the ESP32
+DevKit V1 platform, developed within the wearable systems project for Activities
+of Daily Living (ADL) monitoring at Universidad del Cauca. The tool reads the
+\texttt{WHO\_AM\_I} register (address \texttt{0x75}) via I2C using the native
+\texttt{Wire.h} library in the Arduino IDE environment, with pins GPIO~21 (SDA)
+and GPIO~22 (SCL) at 115\,200~baud. The experimental result yields \texttt{0x72}
+as the silicon identifier, differing from the standard \texttt{0x68} indicated
+in the official InvenSense/TDK datasheet. This finding is critical for the
+correct configuration of the low-level driver in ESP-IDF. Specification tables,
+I2C flow analysis, annotated source code listing, and a diagnostic table for
+possible outcomes are presented.
+
+\smallskip
+\noindent\textbf{Keywords} — MPU6050, WHO\_AM\_I, I2C, ESP32, hardware
+diagnostics, embedded systems, wearables, activities of daily living.
+\end{small}
+\vspace{4pt}\rule{\linewidth}{0.5pt}\vspace{4pt}
+}]
+
+% -----------------------------------------------------------------------
+%  1. INTRODUCCIÓN
+% -----------------------------------------------------------------------
+\section{Introducción}
+
+El envejecimiento poblacional y el auge de la telemedicina han impulsado
+el desarrollo de sistemas embebidos para el monitoreo continuo y
+no intrusivo de Actividades de la Vida Diaria (AVD). Estos sistemas
+—conocidos como wearables— requieren unidades de medición inercial
+(IMU) capaces de capturar patrones de movimiento humano con alta
+fidelidad, bajo consumo energético y reducido perfil físico~\cite{chen2012}.
+
+El sensor MPU6050 de InvenSense/TDK se ha consolidado como una de las
+opciones más extendidas en aplicaciones de investigación y prototipado
+wearable gracias a su integración de acelerómetro y giroscopio triaxiales
+en un único encapsulado de 4$\times$4~mm, su interfaz I2C estándar y su
+bajo precio de mercado~\cite{invensense2013}. No obstante, la masificación
+del mercado de componentes electrónicos ha generado una proliferación de
+módulos MPU6050 que, si bien son compatibles en pinout, corresponden a
+revisiones de silicio distintas a las especificadas en la documentación
+oficial. Esta situación origina un problema práctico y crítico en el
+desarrollo de firmware: la inicialización del sensor puede fallar
+silenciosamente cuando el driver verifica la identidad del dispositivo
+mediante el registro \texttt{WHO\_AM\_I} y obtiene un valor inesperado.
+
+En el contexto del proyecto \textit{Sistema de Monitoreo Vestible para
+Actividades de la Vida Diaria}, desarrollado en el Departamento de
+Ingeniería Electrónica y Telecomunicaciones de la Universidad del
+Cauca~\cite{repo_github}, el Nodo~2 (encargado del registro de
+movimiento) utiliza el MPU6050 sobre la plataforma ESP32 DevKit~V1.
+Durante la etapa de integración con el framework ESP-IDF, se detectó
+que la librería de referencia rechazaba el sensor por discrepancia en
+el valor de \texttt{WHO\_AM\_I}. Como respuesta, se diseñó e implementó
+una herramienta de diagnóstico minimalista en Arduino IDE que permite
+determinar el valor real del identificador de silicio antes de proceder
+con el firmware de producción.
+
+El presente artículo documenta el diseño, implementación y resultados
+de esta herramienta, constituyendo un recurso técnico reproducible para
+cualquier desarrollador que enfrente la misma problemática.
+
+\subsection{Contexto del Proyecto Wearable}
+
+El sistema wearable al que pertenece esta herramienta es una red de
+nodos embebidos heterogéneos cuya función colectiva es capturar señales
+biométricas y de movimiento para el reconocimiento automático de AVD.
+El repositorio público~\cite{repo_github} contiene múltiples
+subsistemas: lectura de frecuencia cardíaca (Nodo~1), detección de
+movimiento con MPU6050 (Nodo~2), pantalla táctil ESP32-S3 (Nodo~3) y
+detección de dirección MAC. Esta herramienta fue desarrollada
+específicamente para resolver el problema de inicialización del Nodo~2.
+
+\subsection{Organización del Artículo}
+
+El resto del artículo se organiza como sigue: la Sección~\ref{sec:rw}
+revisa trabajos relacionados; la Sección~\ref{sec:teoria} presenta el
+marco teórico sobre el MPU6050, el protocolo I2C y el registro
+\texttt{WHO\_AM\_I}; la Sección~\ref{sec:metodo} describe la metodología
+y el diseño experimental; la Sección~\ref{sec:resultados} presenta los
+resultados; la Sección~\ref{sec:discusion} ofrece la discusión;
+finalmente, la Sección~\ref{sec:conclusiones} expone conclusiones y
+trabajo futuro.
+
+% -----------------------------------------------------------------------
+%  2. TRABAJOS RELACIONADOS
+% -----------------------------------------------------------------------
+\section{Trabajos Relacionados}
+\label{sec:rw}
+
+El uso del MPU6050 en sistemas de monitoreo de AVD es ampliamente
+documentado en la literatura. Anguita \textit{et al.}~\cite{anguita2012}
+emplearon el MPU6050 en un teléfono inteligente para reconocimiento de
+actividades físicas (caminar, subir escaleras, sentarse), logrando una
+tasa de clasificación superior al 96\%. Su trabajo evidencia la
+importancia de la calibración y verificación del sensor antes de
+adquirir datos.
+
+En el ámbito de sistemas embebidos de bajo nivel, la problemática de
+módulos con identificadores de silicio no estándar ha sido reportada
+en comunidades de desarrollo como Stack Overflow y los foros oficiales
+de Espressif. Kolban~\cite{kolban2017} señala en su obra de referencia
+sobre ESP32 que la verificación del registro de identidad del dispositivo
+debe hacerse antes de asumir compatibilidad con cualquier driver I2C,
+especialmente en hardware de terceros.
+
+En sistemas IDF, la función de inicialización del driver MPU6050 en
+proyectos de código abierto (p.ej. ESP-IDF MPU driver de hideakitai)
+implementa una verificación de \texttt{WHO\_AM\_I} con máscara de bits
+que solo acepta \texttt{0x68} o \texttt{0x70}, rechazando el valor
+\texttt{0x72} presente en el hardware del presente proyecto. Este
+comportamiento fue la motivación directa para el desarrollo de la
+herramienta de diagnóstico aquí descrita.
+
+A diferencia de los trabajos citados, la herramienta propuesta se centra
+específicamente en el diagnóstico del valor de \texttt{WHO\_AM\_I} como
+paso previo obligatorio a la integración del firmware, con un código
+mínimo, sin dependencias externas y con documentación detallada de los
+posibles resultados.
+
+% -----------------------------------------------------------------------
+%  3. MARCO TEÓRICO
+% -----------------------------------------------------------------------
+\section{Marco Teórico}
+\label{sec:teoria}
+
+\subsection{El Sensor MPU6050}
+
+El MPU6050 es una unidad de medición inercial (IMU) de seis grados de
+libertad (6-DOF) fabricada por InvenSense, actualmente división de
+TDK Corporation. Integra en un único encapsulado QFN de 4$\times$4~mm:
+(a) un acelerómetro triaxial MEMS de rango configurable, (b) un
+giroscopio triaxial MEMS de rango configurable, y (c) un procesador
+de movimiento digital (DMP) con 1~KB de FIFO~\cite{invensense2013}.
+
+\begin{table}[H]
+\centering
+\caption{Especificaciones principales del MPU6050}
+\label{tab:specs}
+\scriptsize
+\begin{tabular}{p{3.0cm}p{3.5cm}}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\
+\midrule
+Interfaz de comunicación & I2C (hasta 400~kHz) \\
+Tensión de alimentación & 2,375 -- 3,46~V \\
+Rango acelerómetro & $\pm$2/$\pm$4/$\pm$8/$\pm$16~g \\
+Rango giroscopio & $\pm$250 a $\pm$2000~°/s \\
+Resolución ADC & 16 bits \\
+Temperatura operación & $-40$ a $+85$~°C \\
+Dirección I2C (AD0=0) & 0x68 \\
+Dirección I2C (AD0=1) & 0x69 \\
+Registro WHO\_AM\_I & 0x75 (esperado: 0x72*) \\
+Consumo activo & 3,9~mA \\
+Encapsulado & QFN 4$\times$4 mm \\
+\bottomrule
+\multicolumn{2}{l}{\tiny *Valor detectado en hardware del proyecto.} \\
+\end{tabular}
+\end{table}
+
+La comunicación con el host se realiza mediante I2C estándar. El sensor
+dispone de 8 rangos de sensibilidad para el acelerómetro y el
+giroscopio, configurables mediante registros de 8 bits en el mapa de
+memoria interno. Los datos de cada eje son registros de 16 bits en
+complemento a dos, organizados en pares de registros consecutivos de
+alta y baja resolución.
+
+\subsection{El Protocolo I2C}
+
+\subsubsection{Generalidades}
+
+I2C (\textit{Inter-Integrated Circuit}) es un protocolo de comunicación
+serie síncrono de dos hilos desarrollado por Philips Semiconductors en
+1982 y estandarizado por NXP~\cite{nxp_i2c}. Opera con una línea de
+datos bidireccional (SDA, \textit{Serial Data Line}) y una línea de
+reloj unidireccional (SCL, \textit{Serial Clock Line}), ambas con
+resistencias de pull-up hacia VCC. La topología es maestro-esclavo,
+con soporte para múltiples dispositivos en el mismo bus.
+
+\subsubsection{Modos de Operación}
+
+El estándar I2C define cuatro modos de velocidad de transferencia:
+Standard (100~kHz), Fast (400~kHz), Fast-Plus (1~MHz) y High-Speed
+(3,4~MHz). En el presente proyecto se emplea el modo Standard a 100~kHz,
+velocidad predeterminada de la biblioteca \texttt{Wire.h} para ESP32.
+
+\subsubsection{Estructura de la Trama I2C}
+
+Una transacción I2C de escritura+lectura (utilizada para acceder a
+registros internos del MPU6050) comprende las siguientes fases:
+\begin{enumerate}
+  \item \textbf{START}: El maestro toma control del bus.
+  \item \textbf{Dirección del esclavo} (7 bits) + bit W=0.
+  \item \textbf{ACK} del esclavo.
+  \item \textbf{Dirección del registro} a leer (8 bits).
+  \item \textbf{ACK} del esclavo.
+  \item \textbf{REPEATED START}: Reinicio sin liberar el bus.
+  \item \textbf{Dirección del esclavo} (7 bits) + bit R=1.
+  \item \textbf{ACK} del esclavo.
+  \item \textbf{Dato leído} por el maestro (8 bits).
+  \item \textbf{NACK} + \textbf{STOP}.
+\end{enumerate}
+
+\subsubsection{I2C en Arduino para ESP32}
+
+En el entorno Arduino para ESP32, la biblioteca \texttt{Wire.h} abstrae
+completamente el protocolo I2C~\cite{wire_arduino}. La inicialización
+se realiza con \texttt{Wire.begin(SDA, SCL)}, especificando los números
+de pin GPIO. Para el ESP32 DevKit V1, los pines por defecto son GPIO~21
+para SDA y GPIO~22 para SCL.
+
+\subsection{El Registro WHO\_AM\_I (0x75)}
+
+El registro \texttt{WHO\_AM\_I} es un campo de solo lectura de 8 bits,
+ubicado en la dirección de registro \texttt{0x75} del mapa de memoria
+del MPU6050. Su función es identificar de manera unívoca el modelo del
+dispositivo conectado en el bus I2C, lo que permite al firmware de host
+verificar que el sensor es el esperado antes de inicializar los
+registros de configuración.
+
+Según la hoja de datos oficial~\cite{invensense2013}, el valor de este
+registro para el MPU6050 es \texttt{0x68} (coincidente con la dirección
+I2C de esclavos AD0=0, aunque son conceptualmente independientes). Sin
+embargo, como resultado de la proliferación de clones y variantes de
+hardware, en la práctica se han documentado los valores indicados en
+la Tabla~\ref{tab:who}.
+
+\begin{table}[H]
+\centering
+\caption{Valores del registro WHO\_AM\_I documentados}
+\label{tab:who}
+\scriptsize
+\begin{tabular}{ccp{2.8cm}}
+\toprule
+\textbf{Valor HEX} & \textbf{Dispositivo} & \textbf{Observación} \\
+\midrule
+0x68 & MPU6050 original & Según datasheet oficial \\
+0x72 & MPU6050 clon/rev. & Detectado en el proyecto \\
+0x98 & MPU6000/variante & Rev. alternativa conocida \\
+0x70 & MPU6500 & IMU de generación posterior \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La discrepancia entre el valor esperado y el valor real puede causar
+que los drivers de bajo nivel en ESP-IDF rechacen el sensor durante la
+inicialización, incluso cuando el hardware está físicamente funcional
+y correctamente conectado.
+
+\subsection{La Plataforma ESP32 DevKit V1}
+
+El ESP32 (Espressif Systems) es un microcontrolador de doble núcleo
+Xtensa LX6 a hasta 240~MHz, con 520~KB de SRAM, Wi-Fi 802.11 b/g/n,
+Bluetooth 4.2, y soporte para múltiples interfaces de comunicación
+(I2C, SPI, UART, I2S, CAN)~\cite{espressif2023}. La placa de desarrollo
+\textit{DevKit V1} es la referencia estándar de la comunidad de Arduino
+para ESP32, con 30 pines GPIO expuestos y regulador de 3.3~V integrado.
+
+Los pines GPIO~21 (SDA) y GPIO~22 (SCL) son los asignados por defecto
+para I2C en el núcleo Arduino ESP32, y son los utilizados en la
+herramienta de diagnóstico aquí descrita. Ambos pines admiten pull-up
+interno configurable por software, aunque en aplicaciones I2C es
+recomendable usar resistencias externas de 4,7~k$\Omega$.
+
+% -----------------------------------------------------------------------
+%  4. METODOLOGÍA Y DISEÑO EXPERIMENTAL
+% -----------------------------------------------------------------------
+\section{Metodología y Diseño Experimental}
+\label{sec:metodo}
+
+\subsection{Configuración de Hardware}
+
+El esquema de conexión entre el ESP32 DevKit V1 y el módulo MPU6050 se
+muestra en la Figura~\ref{fig:conexion}. La alimentación del módulo se
+toma directamente del pin de 3.3~V del ESP32. La Tabla~\ref{tab:pins}
+detalla la asignación de pines y parámetros del sistema.
+
+\begin{table}[H]
+\centering
+\caption{Configuración de pines y parámetros del sistema}
+\label{tab:pins}
+\scriptsize
+\begin{tabular}{p{1.8cm}p{1.5cm}p{2.8cm}}
+\toprule
+\textbf{Señal} & \textbf{Pin ESP32} & \textbf{Descripción} \\
+\midrule
+SDA & GPIO 21 & Datos I2C bidireccional \\
+SCL & GPIO 22 & Reloj I2C \\
+VCC & 3.3V & Alimentación módulo \\
+GND & GND & Tierra común \\
+AD0 & GND & Dir. I2C = 0x68 \\
+\midrule
+\textbf{Parámetro} & \multicolumn{2}{l}{\textbf{Valor}} \\
+\midrule
+Velocidad I2C & \multicolumn{2}{l}{100 kHz (Standard)} \\
+Velocidad serial & \multicolumn{2}{l}{115\,200 baudios} \\
+Dirección I2C & \multicolumn{2}{l}{0x68 (AD0=GND)} \\
+Registro leído & \multicolumn{2}{l}{0x75 (WHO\_AM\_I)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\scriptsize
+\begin{verbatim}
+ +--------------------+    +------------------+
+ |   ESP32 DevKit V1  |    |     MPU6050      |
+ |                    |    |                  |
+ |  GPIO21 (SDA) -----+----+-- SDA            |
+ |  GPIO22 (SCL) -----+----+-- SCL            |
+ |  3.3V         -----+----+-- VCC            |
+ |  GND          -----+----+-- GND            |
+ |                    |    +-- AD0 ---[GND]   |
+ +--------------------+    +------------------+
+   I2C Master (ESP32)        I2C Slave (0x68)
+\end{verbatim}
+\caption{Diagrama de conexión I2C: ESP32 DevKit V1 — MPU6050}
+\label{fig:conexion}
+\end{figure}
+
+\subsection{Entorno de Desarrollo Software}
+
+\begin{itemize}
+  \item \textbf{IDE}: Arduino IDE (versión 2.x, con soporte ESP32)
+  \item \textbf{Placa objetivo}: ESP32 Dev Module (esp32:esp32:esp32doit-devkit-v1)
+  \item \textbf{Biblioteca I2C}: \texttt{Wire.h} nativa del núcleo ESP32;
+        no se requieren librerías externas adicionales.
+  \item \textbf{Monitor Serie}: 115\,200~baudios, finalización de línea
+        \textit{Newline}.
+  \item \textbf{Sistema Operativo}: Compatible con Windows, Linux,
+        macOS.
+  \item \textbf{Compilador}: GCC Xtensa (incluido en el paquete del
+        núcleo ESP32 para Arduino).
+\end{itemize}
+
+\subsection{Descripción del Código Fuente}
+
+El Listado~\ref{lst:code} muestra el código fuente completo de la
+herramienta, disponible en el repositorio GitHub del
+proyecto~\cite{repo_github}. El programa sigue una arquitectura
+deliberadamente minimalista: toda la lógica de diagnóstico se ejecuta
+en la función \texttt{setup()}, que corre una única vez al encendido
+del microcontrolador. La función \texttt{loop()} permanece vacía para
+evitar lecturas repetitivas innecesarias.
+
+\begin{lstlisting}[style=arduino,
+  caption={herramienta\_who\_i\_am\_id\_interno\_arduino\_ide.ino},
+  label=lst:code]
+#include <Wire.h>
+
+void setup() {
+  // Iniciar I2C: SDA=GPIO21, SCL=GPIO22
+  Wire.begin(21, 22);
+  // Iniciar comunicacion serial a 115200 baudios
+  Serial.begin(115200);
+
+  Serial.println("Leyendo WHO_AM_I...");
+
+  // Iniciar transmision al esclavo 0x68
+  Wire.beginTransmission(0x68);
+  // Escribir direccion del registro WHO_AM_I
+  Wire.write(0x75);
+  // Repeated START (no liberar el bus)
+  Wire.endTransmission(false);
+
+  // Solicitar 1 byte de lectura al esclavo
+  Wire.requestFrom(0x68, 1);
+
+  if (Wire.available()) {
+    uint8_t val = Wire.read();
+    Serial.print("WHO_AM_I: 0x");
+    Serial.println(val, HEX);
+  } else {
+    Serial.println("No se pudo leer el sensor");
+  }
+}
+
+// Sin operaciones en el bucle principal
+void loop() {}
+\end{lstlisting}
+
+\noindent{\tiny Código fuente en GitHub:\\
+\url{https://github.com/Cdcuellar/Sistemas-embebidos---Actividades-de-la-vida-diaria/blob/main/herramienta_who_i_am_id_interno_arduino_ide/herramienta_who_i_am_id_interno_arduino_ide.ino}}
+
+\medskip
+\noindent{\tiny Notas de depuración (README.txt):\\
+\url{https://github.com/Cdcuellar/Sistemas-embebidos---Actividades-de-la-vida-diaria/blob/main/herramienta_who_i_am_id_interno_arduino_ide/README.txt}}
+
+\subsection{Análisis Línea a Línea del Código}
+
+\subsubsection{Inicialización del Bus I2C}
+La llamada \texttt{Wire.begin(21, 22)} inicializa el periférico I2C
+del ESP32 asignando GPIO~21 como SDA y GPIO~22 como SCL. Esta función
+configura internamente el driver I2C del ESP32, habilita los pull-ups
+internos y establece la velocidad de reloj a 100~kHz por defecto.
+
+\subsubsection{Inicio de Transmisión}
+\texttt{Wire.beginTransmission(0x68)} coloca en la cola interna de
+transmisión la dirección del esclavo (0x68) con el bit de escritura.
+La trama física no se envía hasta llamar a \texttt{Wire.endTransmission()}.
+
+\subsubsection{Escritura de la Dirección del Registro}
+\texttt{Wire.write(0x75)} añade a la cola el byte de dirección del
+registro \texttt{WHO\_AM\_I}. Este byte le indica al MPU6050 desde qué
+posición del mapa de registros se comenzará a leer.
+
+\subsubsection{REPEATED START}
+\texttt{Wire.endTransmission(false)} envía la trama de escritura
+acumulada y genera una condición de REPEATED START (reinicio sin
+liberar el bus), que es la secuencia estándar para cambiar de modo
+escritura a modo lectura en I2C sin ceder el control del bus a otro
+maestro.
+
+\subsubsection{Solicitud de Lectura}
+\texttt{Wire.requestFrom(0x68, 1)} genera la trama de lectura con la
+dirección del esclavo y el bit R=1, y solicita la recepción de 1~byte.
+El sensor responde con el valor almacenado en el registro \texttt{0x75}.
+
+\subsubsection{Lectura y Presentación del Resultado}
+\texttt{Wire.available()} verifica que haya al menos un byte en el
+buffer de recepción. Si es así, \texttt{Wire.read()} extrae el byte y
+se imprime en el Monitor Serie en formato hexadecimal mediante
+\texttt{Serial.println(val, HEX)}.
+
+\subsection{Procedimiento de Ejecución}
+
+\begin{enumerate}
+  \item Realizar las conexiones según la Figura~\ref{fig:conexion} y
+        la Tabla~\ref{tab:pins}.
+  \item Abrir el archivo \texttt{.ino} en Arduino IDE.
+  \item En \textit{Herramientas $\rightarrow$ Placa}, seleccionar
+        \textbf{ESP32 Dev Module}.
+  \item Seleccionar el puerto COM correspondiente al ESP32.
+  \item Compilar y cargar (\textit{Ctrl+U}).
+  \item Abrir el Monitor Serie (\textit{Ctrl+Mayús+M}) configurado a
+        \textbf{115\,200~baudios}.
+  \item Observar el valor de \texttt{WHO\_AM\_I} reportado.
+\end{enumerate}
+
+% -----------------------------------------------------------------------
+%  5. RESULTADOS E IMPLEMENTACIÓN
+% -----------------------------------------------------------------------
+\section{Resultados e Implementación}
+\label{sec:resultados}
+
+\subsection{Resultado Experimental}
+
+Al ejecutar la herramienta sobre el hardware del Nodo~2 del proyecto
+(ESP32 DevKit V1 con módulo MPU6050 del mercado local colombiano), la
+salida obtenida en el Monitor Serie fue:
+
+\begin{lstlisting}[style=output,
+  caption={Salida del Monitor Serie (115\,200 baudios)},
+  label=lst:out]
+Leyendo WHO_AM_I...
+WHO_AM_I: 0x72
+\end{lstlisting}
+
+Este resultado confirma simultáneamente tres aspectos del sistema:
+\begin{enumerate}
+  \item El bus I2C opera correctamente en los pines GPIO~21/22.
+  \item El sensor MPU6050 responde a la dirección \texttt{0x68}.
+  \item La revisión de silicio del módulo es \texttt{0x72} (no el
+        estándar \texttt{0x68}).
+\end{enumerate}
+
+\subsection{Tabla de Diagnóstico y Resultados Posibles}
+
+La Tabla~\ref{tab:resultados} clasifica todos los escenarios de salida
+posibles y la acción recomendada en cada caso.
+
+\begin{table}[H]
+\centering
+\caption{Tabla de diagnóstico según valor de WHO\_AM\_I}
+\label{tab:resultados}
+\scriptsize
+\begin{tabular}{p{0.9cm}p{1.2cm}p{3.6cm}}
+\toprule
+\textbf{Valor} & \textbf{Estado} & \textbf{Diagnóstico y acción} \\
+\midrule
+0x72 & \textcolor{green!60!black}{\bfseries OK} & Sensor identificado (rev. del proyecto). Ajustar máscara WHO\_AM\_I en driver IDF a 0x72. \\
+0x68 & \textcolor{green!60!black}{\bfseries OK} & Sensor original datasheet. Compatible sin modificaciones en el driver. \\
+0x70 & \textcolor{orange}{\bfseries ALERTA} & Posible MPU6500. Verificar compatibilidad del driver. \\
+0x98 & \textcolor{orange}{\bfseries ALERTA} & Revisión alternativa. Revisar lógica de inicialización. \\
+Otro & \textcolor{red}{\bfseries ERROR} & ID desconocido. Confirmar alimentación y cableado I2C. \\
+(nada) & \textcolor{red}{\bfseries ERROR} & Sin respuesta. Verificar conexiones, VCC=3.3V y AD0. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Análisis del Flujo de Comunicación I2C}
+
+La secuencia de tramas I2C generadas por el programa puede
+representarse de manera simplificada como:
+
+\begin{lstlisting}[style=output, numbers=none, caption={Trama I2C generada}]
+[START][0xD0 W][ACK][0x75][ACK]
+[RSTART][0xD1 R][ACK][DATO=0x72][NACK][STOP]
+\end{lstlisting}
+
+donde \texttt{0xD0} = dirección 0x68 desplazada 1 bit a la izquierda con bit W=0, y \texttt{0xD1} = dirección 0x68 con bit R=1. El tiempo total de la transacción a 100~kHz es de aproximadamente 180~$\mu$s.
+
+\subsection{Implicaciones para el Firmware ESP-IDF}
+
+La identificación de \texttt{WHO\_AM\_I = 0x72} tiene implicaciones
+directas en el firmware de producción del Nodo~2, desarrollado con el
+framework ESP-IDF:
+
+\begin{itemize}
+  \item La función \texttt{mpu6050\_init()} del driver de bajo nivel
+        (archivo \texttt{esp32\_2/main/mpu6050.c} en el repositorio)
+        debe modificar su condición de verificación para aceptar el
+        valor \texttt{0x72} como identidad válida del sensor.
+  \item Las mascaras de bits que filtran el registro devuelto deben
+        adaptarse al valor experimental obtenido.
+  \item La documentación del README~\cite{readme_debug} registra este
+        hallazgo para garantizar la trazabilidad del hardware utilizado
+        en experimentos futuros.
+\end{itemize}
+
+\subsection{Archivos del Proyecto en GitHub}
+
+La Tabla~\ref{tab:archivos} lista los archivos del repositorio público
+relevantes para este artículo.
+
+\begin{table}[H]
+\centering
+\caption{Archivos del proyecto en el repositorio GitHub}
+\label{tab:archivos}
+\scriptsize
+\begin{tabular}{p{3.5cm}p{3.0cm}}
+\toprule
+\textbf{Archivo} & \textbf{Descripción} \\
+\midrule
+\texttt{herramienta\_who\_i\_am\_...ino} & Código fuente principal \\
+\texttt{README.txt} & Notas de depuración \\
+\texttt{build/.../embebido.ino.bin} & Binario compilado \\
+\texttt{build/.../embebido.ino.elf} & ELF con símbolos de depuración \\
+\texttt{esp32\_2/main/mpu6050.c} & Driver C (ESP-IDF) \\
+\texttt{esp32\_2/main/mpu6050.h} & Cabecera del driver \\
+\texttt{esp32\_2/CMakeLists.txt} & Build system IDF \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+%  5b. DISCUSIÓN
+% -----------------------------------------------------------------------
+\section{Discusión}
+\label{sec:discusion}
+
+\subsection{Implicaciones del Valor 0x72}
+
+El hallazgo de \texttt{WHO\_AM\_I = 0x72} en lugar del valor canónico
+\texttt{0x68} del datasheet oficial tiene consecuencias técnicas
+importantes que van más allá de la simple verificación de identidad.
+En primer lugar, confirma que el módulo utilizado es una variante
+de terceros —probablemente fabricada por un proveedor chino sin licencia
+oficial de TDK— que implementa el mismo núcleo funcional del MPU6050
+pero con una programación diferente del registro de identidad. Esta
+práctica es conocida en la industria electrónica de componentes genéricos
+y no invalida las capacidades funcionales del sensor, pero sí requiere
+adaptaciones específicas en el software.
+
+\subsection{Impacto en el Desarrollo del Driver ESP-IDF}
+
+En el contexto del framework ESP-IDF, los drivers de dispositivos
+I2C implementan habitualmente una verificación del tipo:
+
+\begin{lstlisting}[style=output, numbers=none]
+if (who_am_i != EXPECTED_ID) {
+    return ESP_ERR_NOT_FOUND;
+}
+\end{lstlisting}
+
+Si \texttt{EXPECTED\_ID} está fijado en \texttt{0x68} y el sensor
+devuelve \texttt{0x72}, la inicialización falla con el código de error
+\texttt{ESP\_ERR\_NOT\_FOUND}, haciendo que el sistema complete el
+arranque sin el sensor operativo. La herramienta de diagnóstico
+desarrollada permite detectar este problema antes de integrar el driver
+completo, ahorrando horas de depuración a nivel de firmware.
+
+\subsection{Generalización a Otros Proyectos}
+
+La metodología propuesta es directamente aplicable a cualquier proyecto
+que utilice el MPU6050 u otros sensores I2C en plataformas ESP32 o
+similares. La lectura del registro \texttt{WHO\_AM\_I} debería ser un
+paso estándar en el flujo de calificación de hardware de cualquier
+diseño electrónico que dependa de sensores I2C, especialmente cuando
+se adquieren componentes en el mercado secundario o de importación.
+
+\subsection{Limitaciones de la Herramienta}
+
+La herramienta tiene las siguientes limitaciones:
+\begin{enumerate}
+  \item Solo realiza una lectura al encendido; no monitoriza cambios
+        durante la operación.
+  \item No verifica el correcto funcionamiento de la medición
+        (aceleración/giroscopía), solo la identidad del silicio.
+  \item Requiere el entorno Arduino IDE, no es directamente ejecutable
+        desde el framework ESP-IDF de producción.
+  \item No implementa manejo de errores para bus I2C bloqueado
+        (\textit{bus stuck}).
+\end{enumerate}
+
+Estas limitaciones son intencionadas en el diseño: la herramienta
+es deliberadamente simple para maximizar la fiabilidad del diagnóstico
+inicial y minimizar las posibles fuentes de error propias del código.
+
+% -----------------------------------------------------------------------
+%  6. CONCLUSIONES Y TRABAJO FUTURO
+% -----------------------------------------------------------------------
+\section{Conclusiones}
+\label{sec:conclusiones}
+
+\subsection{Conclusiones}
+
+\begin{enumerate}
+  \item Se diseñó e implementó exitosamente una herramienta de
+        diagnóstico de hardware para el sensor MPU6050 sobre ESP32
+        DevKit V1 mediante la lectura del registro \texttt{WHO\_AM\_I}
+        (dirección \texttt{0x75}) vía I2C, utilizando únicamente la
+        biblioteca nativa \texttt{Wire.h} del entorno Arduino IDE, sin
+        dependencias externas.
+
+  \item El experimento realizado sobre el hardware del Nodo~2 del
+        sistema wearable en la Universidad del Cauca confirmó que el
+        módulo MPU6050 utilizado reporta \texttt{WHO\_AM\_I = 0x72},
+        que difiere del valor estándar \texttt{0x68} del datasheet
+        oficial. Este hallazgo es crítico e imprescindible para la
+        correcta configuración del driver de bajo nivel en ESP-IDF.
+
+  \item El diseño minimalista del programa —lectura en \texttt{setup()},
+        \texttt{loop()} vacío— garantiza un diagnóstico rápido y sin
+        ambigüedades, adecuado como \textbf{Fase~0} obligatoria en
+        cualquier flujo de puesta en marcha de hardware basado en
+        MPU6050 sobre ESP32.
+
+  \item La configuración hardware documentada (GPIO~21 SDA, GPIO~22 SCL,
+        dirección I2C \texttt{0x68}, 115\,200~baudios) fue validada
+        experimentalmente y publicada en el repositorio público GitHub,
+        facilitando la replicación del entorno en otros nodos del
+        sistema y en proyectos similares de la comunidad.
+
+  \item La publicación del código fuente, binarios de compilación
+        y documentación de depuración en un repositorio de acceso abierto
+        promueve la reproducibilidad de los experimentos y la
+        colaboración en el desarrollo de sistemas embebidos wearables
+        para monitoreo de AVD.
+\end{enumerate}
+
+\subsection{Trabajo Futuro}
+
+Como extensión natural de este trabajo se plantea:
+\begin{itemize}
+  \item Integrar la verificación de \texttt{WHO\_AM\_I} como
+        condición de guarda (\textit{guard clause}) en la función
+        \texttt{mpu6050\_init()} del driver ESP-IDF del proyecto.
+  \item Ampliar la herramienta para leer y verificar otros registros
+        de configuración críticos: \texttt{PWR\_MGMT\_1} (\texttt{0x6B}),
+        \texttt{SMPLRT\_DIV} (\texttt{0x19}), \texttt{CONFIG}
+        (\texttt{0x1A}) y \texttt{GYRO\_CONFIG} (\texttt{0x1B}).
+  \item Desarrollar una versión en ESP-IDF puro (C/FreeRTOS) de la
+        herramienta de diagnóstico, coherente con el entorno de
+        producción del proyecto wearable.
+  \item Diseñar una rutina de autocalibración del offset de
+        acelerómetro y giroscopio basada en los datos del registro
+        leído, para mejorar la precisión del sistema AVD.
+\end{itemize}
+
+% -----------------------------------------------------------------------
+%  REFERENCIAS
+% -----------------------------------------------------------------------
+\begin{thebibliography}{8}
+
+\bibitem{invensense2013}
+InvenSense Inc., \textit{MPU-6000 and MPU-6050 Product Specification
+Revision 3.4}, doc. PS-MPU-6000A-00, InvenSense Inc., Sunnyvale,
+CA, USA, 2013. [En línea]. Disp.:
+\url{https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf}
+
+\bibitem{nxp_i2c}
+NXP Semiconductors, \textit{I2C-bus specification and user manual},
+Rev.~7.0, UM10204, NXP Semiconductors, 2021. [En línea]. Disp.:
+\url{https://www.nxp.com/docs/en/user-guide/UM10204.pdf}
+
+\bibitem{espressif2023}
+Espressif Systems, \textit{ESP32 Technical Reference Manual}, v5.1,
+Espressif Systems, Shanghai, China, 2023. [En línea]. Disp.:
+\url{https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf}
+
+\bibitem{chen2012}
+L. Chen, J. Hoey, C. D. Nugent, D. J. Cook y Z. Yu,
+``Sensor-based activity recognition,'' \textit{IEEE Trans. Syst.,
+Man, Cybern. Part C}, vol.~42, no.~6, pp.~790--808, Nov.~2012,
+doi: 10.1109/TSMCC.2012.2198883.
+
+\bibitem{anguita2012}
+D. Anguita, A. Ghio, L. Oneto, X. Parra y J. L. Reyes-Ortiz,
+``Human activity recognition on smartphones using a multiclass
+hardware-friendly support vector machine,'' in \textit{Proc. Int.
+Workshop Ambient Assisted Living (IWAAL)}, Vitoria-Gasteiz, Spain,
+2012, pp.~216--223.
+
+\bibitem{readme_debug}
+C. D. Cuellar Antury, ``Notas de Depuración de Hardware — Proyecto
+AVD,'' \textit{README.txt}, Univ. del Cauca, 2024. [En línea]. Disp.:
+\url{https://github.com/Cdcuellar/Sistemas-embebidos---Actividades-de-la-vida-diaria/blob/main/herramienta_who_i_am_id_interno_arduino_ide/README.txt}
+
+\bibitem{repo_github}
+C. D. Cuellar Antury, ``Sistemas Embebidos — Actividades de la Vida
+Diaria,'' Repositorio GitHub, Univ. del Cauca, 2024. [En línea].
+Disp.: \url{https://github.com/Cdcuellar/Sistemas-embebidos---Actividades-de-la-vida-diaria}
+
+\bibitem{wire_arduino}
+Arduino LLC, \textit{Wire Library Reference}, Arduino Reference
+Documentation, 2023. [En línea]. Disp.:
+\url{https://www.arduino.cc/en/reference/wire}
+
+\bibitem{kolban2017}
+N. Kolban, \textit{Kolban's Book on ESP32}, Leanpub, 2017. [En línea].
+Disp.: \url{https://leanpub.com/kolban-ESP32}
+
+\end{thebibliography}
+
+\end{document}
