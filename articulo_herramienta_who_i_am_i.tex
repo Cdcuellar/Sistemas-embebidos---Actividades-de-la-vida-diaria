@@ -76,7 +76,11 @@
   captionpos=b,
   aboveskip=4pt,
   belowskip=2pt,
-  morekeywords={uint8\_t,Wire,Serial}
+  morekeywords={uint8_t,Wire,Serial},
+  literate=
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+    {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+    {ñ}{{\~n}}1 {Ñ}{{\~N}}1
 }
 
 \lstdefinestyle{output}{
@@ -484,7 +488,7 @@ evitar lecturas repetitivas innecesarias.
 void setup() {
   // Iniciar I2C: SDA=GPIO21, SCL=GPIO22
   Wire.begin(21, 22);
-  // Iniciar comunicacion serial a 115200 baudios
+  // Iniciar comunicación serial a 115200 baudios
   Serial.begin(115200);
 
   Serial.println("Leyendo WHO_AM_I...");
