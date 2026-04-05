@@ -1,3 +1,23 @@
+/**
+ * @file main.c
+ * @brief Nodo esclavo #2 – sensor inercial MPU6050 con transmisión ESP-NOW.
+ * @details Firmware del nodo esclavo que adquiere datos del sensor MPU6050
+ *          (acelerómetro + giroscopio de 6 ejes) mediante I2C, calcula ángulos
+ *          de inclinación (roll / pitch) y envía un paquete de 32 bytes cada
+ *          500 ms al nodo maestro usando el protocolo ESP-NOW sobre WiFi canal 1.
+ *          Utiliza dos tareas FreeRTOS protegidas por mutex y gestión de energía
+ *          (Light Sleep + CPU 80 MHz) para minimizar consumo.
+ *
+ *          Hardware:
+ *          - ESP32 (ESP32-D0WD-V3)
+ *          - MPU6050 conectado a SDA=GPIO21, SCL=GPIO22, AD0=GND
+ *
+ *          Protocolo:
+ *          - ESP-NOW, canal 1, payload 32 bytes (8 floats), sin cifrado
+ *
+ * @author Carlos Daniel Cuellar Antury
+ */
+
 /* ============================================================
    BIBLIOTECAS
    ============================================================ */
@@ -63,33 +83,53 @@ static const uint8_t MAC_MAESTRO[ESP_NOW_ETH_ALEN] = {0xC8, 0x2E, 0x18, 0x67, 0x
    ESTRUCTURA DE DATOS COMPARTIDA ENTRE TAREAS
    ============================================================ */
 
-/* Paquete de datos que se envía por ESP-NOW al maestro */
+/**
+ * @brief Paquete de telemetría enviado por ESP-NOW al maestro.
+ * @details Estructura de 32 bytes exactos (8 floats × 4 bytes) que define
+ *          el contrato de formato entre el nodo esclavo y el nodo maestro.
+ *          El orden de los campos es significativo y no debe modificarse sin
+ *          actualizar también el struct correspondiente en el maestro.
+ */
 typedef struct {
-    float mpu_x;   /* Aceleración en eje X en unidades g (±2g)  */
-    float mpu_y;   /* Aceleración en eje Y en unidades g (±2g)  */
-    float mpu_z;   /* Aceleración en eje Z en unidades g (±2g)  */
+    float roll;    /**< Ángulo de inclinación lateral (rotación sobre eje X) en grados */
+    float pitch;   /**< Ángulo de cabeceo adelante/atrás (rotación sobre eje Y) en grados */
+    float acc_x;   /**< Aceleración en eje X en unidades g (rango ±2g) */
+    float acc_y;   /**< Aceleración en eje Y en unidades g (rango ±2g) */
+    float acc_z;   /**< Aceleración en eje Z en unidades g (rango ±2g) */
+    float gyr_x;   /**< Velocidad angular en eje X en grados/segundo (rango ±250 °/s) */
+    float gyr_y;   /**< Velocidad angular en eje Y en grados/segundo (rango ±250 °/s) */
+    float gyr_z;   /**< Velocidad angular en eje Z en grados/segundo (rango ±250 °/s) */
 } datos_mpu_t;
+
+/* Verificación en tiempo de compilación: debe ser exactamente 32 bytes */
+_Static_assert(sizeof(datos_mpu_t) == 32, "datos_mpu_t debe ser exactamente 32 bytes");
 
 /* ============================================================
    VARIABLES GLOBALES
    ============================================================ */
 
-/* Buffer compartido: la tarea de muestreo escribe aquí, la de envío lee */
+/** @brief Buffer compartido entre tareas; la tarea de muestreo escribe y la de envío lee. */
 static datos_mpu_t datos_compartidos = {0};
 
-/* Mutex binario: impide que dos tareas accedan a datos_compartidos al mismo tiempo */
+/** @brief Mutex binario que serializa el acceso a @ref datos_compartidos. */
 static SemaphoreHandle_t mutex_datos = NULL;
 
-/* Instancia del sensor MPU6050: contiene el handle I2C y los offsets de calibración */
+/** @brief Instancia del driver MPU6050; almacena el handle I2C y los offsets de calibración. */
 static mpu6050_t sensor_mpu;
 
 /* ============================================================
    CALLBACK DE CONFIRMACION ESP-NOW
    ============================================================ */
 
-/*
- * El hardware llama a esta función automáticamente después de cada envío ESP-NOW.
- * Informa si el paquete llegó al maestro o si hubo fallo de transmisión.
+/**
+ * @brief Callback de confirmación de envío ESP-NOW.
+ * @details El stack de ESP-NOW invoca esta función automáticamente tras cada
+ *          intento de transmisión, tanto si el destinatario acusa recibo (ACK)
+ *          como si la transmisión falla. Se registra con esp_now_register_send_cb().
+ * @param info_envio Metadatos del envío (dirección MAC de destino). Puede ser NULL
+ *                   si el sistema está en estado inválido; se maneja con guarda.
+ * @param estado     Resultado: ESP_NOW_SEND_SUCCESS si el maestro recibió el paquete,
+ *                   ESP_NOW_SEND_FAIL en caso contrario.
  */
 static void callback_envio_espnow(const esp_now_send_info_t *info_envio, esp_now_send_status_t estado)
 {
@@ -115,9 +155,16 @@ static void callback_envio_espnow(const esp_now_send_info_t *info_envio, esp_now
    INICIALIZACION DE RED WIFI (BASE PARA ESP-NOW)
    ============================================================ */
 
-/*
- * ESP-NOW necesita que el subsistema WiFi esté activo aunque no haya conexión a router.
- * Esta función arranca WiFi en modo estación (STA) y fija el canal acordado con el maestro.
+/**
+ * @brief Inicializa el subsistema WiFi como base para ESP-NOW.
+ * @details ESP-NOW requiere que el driver WiFi esté activo aunque no haya
+ *          ninguna conexión a un router. Esta función:
+ *          1. Inicializa (o borra y reinicia) la partición NVS.
+ *          2. Arranca la capa de red y el bucle de eventos.
+ *          3. Configura WiFi en modo estación (STA).
+ *          4. Fija el canal WiFi al mismo que usa el nodo maestro.
+ * @return ESP_OK si todo se inicializó correctamente.
+ * @return Código de error ESP-IDF en caso de fallo en cualquier paso.
  */
 static esp_err_t iniciar_wifi_para_espnow(void)
 {
@@ -149,9 +196,14 @@ static esp_err_t iniciar_wifi_para_espnow(void)
    INICIALIZACION DE ESP-NOW
    ============================================================ */
 
-/*
- * Registra el protocolo ESP-NOW sobre el WiFi ya iniciado,
- * asigna el callback de confirmación y añade el nodo maestro como destino conocido.
+/**
+ * @brief Inicializa el stack ESP-NOW y registra el nodo maestro como peer.
+ * @details Debe llamarse después de @ref iniciar_wifi_para_espnow().
+ *          Registra el callback de confirmación y añade la MAC del maestro
+ *          como destino conocido. Si el peer ya existía de un arranque anterior
+ *          lo elimina antes de re-añadirlo para evitar duplicados.
+ * @return ESP_OK si ESP-NOW quedó listo para enviar.
+ * @return Código de error ESP-IDF si alguno de los pasos falla.
  */
 static esp_err_t iniciar_espnow(void)
 {
@@ -178,9 +230,14 @@ static esp_err_t iniciar_espnow(void)
    GESTION DE CONSUMO ENERGETICO
    ============================================================ */
 
-/*
- * Configura el CPU a 80 MHz (suficiente para I2C + ESP-NOW) y
- * habilita Light Sleep automático cuando ambas tareas están en vTaskDelay.
+/**
+ * @brief Configura la gestión de energía del chip.
+ * @details Fija la frecuencia del CPU a 80 MHz (suficiente para I2C a 100 kHz
+ *          y ESP-NOW) y habilita Light Sleep automático. El chip entra en
+ *          Light Sleep durante los vTaskDelay() de ambas tareas, reduciendo
+ *          el consumo promedio sin afectar la temporización.
+ *          Si el proyecto no tiene CONFIG_PM_ENABLE activo, la función avisa
+ *          en el log pero no aborta la ejecución.
  */
 static void configurar_gestion_potencia(void)
 {
@@ -203,10 +260,17 @@ static void configurar_gestion_potencia(void)
    TAREA DE MUESTREO (cada 100 ms)
    ============================================================ */
 
-/*
- * Lee los 6 ejes del MPU6050 cada 100 ms.
- * Convierte la aceleración a unidades g y actualiza la estructura compartida.
- * Cada 5 lecturas (cada 500 ms) imprime un resumen en el monitor serie.
+/**
+ * @brief Tarea FreeRTOS de muestreo del sensor MPU6050.
+ * @details Se ejecuta cada @ref PERIODO_MUESTREO_MS (100 ms). En cada ciclo:
+ *          1. Lee los 6 ejes crudos por I2C con mpu6050_read_all_raw().
+ *          2. Convierte aceleraciones a unidades g (÷16384) y velocidades
+ *             angulares a °/s (÷131).
+ *          3. Calcula roll y pitch mediante atan2f().
+ *          4. Actualiza @ref datos_compartidos bajo @ref mutex_datos.
+ *          5. Cada @ref LOG_CADA_MUESTRAS iteraciones imprime un resumen.
+ *          Si la lectura I2C falla, registra el error y continúa (robustez).
+ * @param param No utilizado (requerido por la firma de xTaskCreate). Pasa NULL.
  */
 static void tarea_muestreo_mpu(void *param)
 {
@@ -245,12 +309,23 @@ static void tarea_muestreo_mpu(void *param)
                ACTUALIZACION DE DATOS COMPARTIDOS (con mutex)
                ------------------------------------------------ */
 
+            /* Cálculo de velocidades angulares en grados/segundo */
+            /* Rango ±250°/s → sensibilidad 131 LSB/(°/s) */
+            float gx_dps = gx / 131.0f;   /* Velocidad angular X en grados/segundo */
+            float gy_dps = gy / 131.0f;   /* Velocidad angular Y en grados/segundo */
+            float gz_dps = gz / 131.0f;   /* Velocidad angular Z en grados/segundo */
+
             /* Toma el mutex: bloquea hasta 20 ms para no chocar con la tarea de envío */
             if (xSemaphoreTake(mutex_datos, pdMS_TO_TICKS(20)) == pdTRUE) {
-                datos_compartidos.mpu_x = ax_g;   /* Escribe X en el buffer compartido */
-                datos_compartidos.mpu_y = ay_g;   /* Escribe Y en el buffer compartido */
-                datos_compartidos.mpu_z = az_g;   /* Escribe Z en el buffer compartido */
-                xSemaphoreGive(mutex_datos);       /* Libera el mutex para que otros accedan */
+                datos_compartidos.roll  = roll;      /* Ángulo Roll  */
+                datos_compartidos.pitch = pitch;     /* Ángulo Pitch */
+                datos_compartidos.acc_x = ax_g;      /* Aceleración X */
+                datos_compartidos.acc_y = ay_g;      /* Aceleración Y */
+                datos_compartidos.acc_z = az_g;      /* Aceleración Z */
+                datos_compartidos.gyr_x = gx_dps;    /* Velocidad angular X */
+                datos_compartidos.gyr_y = gy_dps;    /* Velocidad angular Y */
+                datos_compartidos.gyr_z = gz_dps;    /* Velocidad angular Z */
+                xSemaphoreGive(mutex_datos);         /* Libera el mutex para que otros accedan */
             }
 
             /* ------------------------------------------------
@@ -259,12 +334,7 @@ static void tarea_muestreo_mpu(void *param)
 
             contador_logs++;
             if ((contador_logs % LOG_CADA_MUESTRAS) == 0) {
-                /* Rango ±250°/s → sensibilidad 131 LSB/(°/s) */
-                float gx_dps = gx / 131.0f;   /* Velocidad angular X en grados/segundo */
-                float gy_dps = gy / 131.0f;   /* Velocidad angular Y en grados/segundo */
-                float gz_dps = gz / 131.0f;   /* Velocidad angular Z en grados/segundo */
-
-                ESP_LOGI(TAG, "AX:%.3f AY:%.3f AZ:%.3f | GX:%.2f GY:%.2f GZ:%.2f | Roll:%.1f Pitch:%.1f",
+                ESP_LOGI(TAG, "Acc:%.3f,%.3f,%.3f g | Gyr:%.2f,%.2f,%.2f dps | Roll:%.1f Pitch:%.1f",
                          ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps, roll, pitch);
             }
         } else {
@@ -281,9 +351,17 @@ static void tarea_muestreo_mpu(void *param)
    TAREA DE TRANSMISION ESP-NOW (cada 500 ms)
    ============================================================ */
 
-/*
- * Cada 500 ms copia el último dato disponible y lo envía al maestro por ESP-NOW.
- * El resultado real del envío (ACK o fallo) llega en callback_envio_espnow.
+/**
+ * @brief Tarea FreeRTOS de transmisión ESP-NOW.
+ * @details Se ejecuta cada @ref PERIODO_ENVIO_MS (500 ms). En cada ciclo:
+ *          1. Copia @ref datos_compartidos a un buffer local bajo @ref mutex_datos
+ *             (el mutex se libera antes del envío para no bloquear la tarea de muestreo).
+ *          2. Llama a esp_now_send() con sizeof(datos_mpu_t) = 32 bytes.
+ *          3. El resultado final del envío (ACK/NACK) se reporta en
+ *             @ref callback_envio_espnow.
+ *          Si esp_now_send() devuelve error local (buffer lleno, etc.) lo registra
+ *          en el log pero continúa en el siguiente ciclo.
+ * @param param No utilizado (requerido por la firma de xTaskCreate). Pasa NULL.
  */
 static void tarea_transmision_espnow(void *param)
 {
@@ -305,7 +383,7 @@ static void tarea_transmision_espnow(void *param)
            ENVIO POR ESP-NOW
            ------------------------------------------------ */
 
-        /* Envía sizeof(datos_mpu_t) = 12 bytes al maestro; confirmación llega por callback */
+        /* Envía sizeof(datos_mpu_t) = 32 bytes al maestro; confirmación llega por callback */
         esp_err_t ret = esp_now_send(MAC_MAESTRO, (const uint8_t *)&copia_local, sizeof(copia_local));
         if (ret != ESP_OK) {
             /* Error local de stack (ej. buffer lleno); diferente al fallo de ACK del callback */
@@ -321,9 +399,19 @@ static void tarea_transmision_espnow(void *param)
    PUNTO DE ENTRADA PRINCIPAL
    ============================================================ */
 
-/*
- * app_main() es el equivalente al main() de C estándar en ESP-IDF.
- * Se ejecuta una sola vez al arrancar; al final crea las tareas y retorna.
+/**
+ * @brief Punto de entrada principal del firmware (equivalente a main()).
+ * @details Se ejecuta una única vez al arrancar el chip. Realiza en orden:
+ *          1. Inicialización del bus I2C (GPIO21/22, 100 kHz).
+ *          2. Detección del MPU6050 (hasta @ref REINTENTOS_DETECCION intentos,
+ *             prueba 0x68 y 0x69).
+ *          3. Calibración del sensor con 100 muestras en reposo.
+ *          4. Creación del mutex de protección de datos.
+ *          5. Inicialización de WiFi + ESP-NOW con MAC del maestro.
+ *          6. Configuración de gestión de energía.
+ *          7. Creación y lanzamiento de las dos tareas FreeRTOS.
+ *          Tras retornar, FreeRTOS toma el control y ejecuta las tareas
+ *          de forma concurrente indefinidamente.
  */
 void app_main(void)
 {

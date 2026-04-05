@@ -1,3 +1,16 @@
+/**
+ * @file mpu6050.c
+ * @brief Implementación del driver para el sensor inercial MPU6050.
+ * @details Contiene la lógica interna de comunicación I2C, inicialización,
+ *          calibración y lectura del sensor MPU6050 (acelerómetro + giroscopio
+ *          de 6 ejes). Usa el driver I2C master de ESP-IDF v5+ y es compatible
+ *          con las direcciones 0x68 y 0x69 del chip.
+ *
+ *          Esta unidad de compilación es privada al driver; la API pública
+ *          se declara en mpu6050.h.
+ *
+ */
+
 /* ============================================================
    BIBLIOTECAS
    ============================================================ */
@@ -33,19 +46,16 @@ static const char *MPU_TAG = "MPU6050";
 #define MPU6050_REG_WHO_AM_I      0x75   /* Identificador del chip: debe devolver 0x68 o 0x69 */
 #define MPU6050_REG_PWR_MGMT_1   0x6B   /* Control de energía y reset del dispositivo         */
 #define MPU6050_REG_ACCEL_XOUT_H 0x3B   /* Primer byte de los 14 bytes de datos (accel+temp+gyro)*/
-#define MPU6050_WHOAMI_ADDR0     0x68   /* Valor esperado en WHO_AM_I con AD0=GND              */
-#define MPU6050_WHOAMI_ADDR1     0x69   /* Valor esperado en WHO_AM_I con AD0=VCC              */
-
 /* ============================================================
    FUNCIONES INTERNAS DE COMUNICACION I2C
    ============================================================ */
 
-/*
- * Escribe un byte en un registro del sensor.
- * Parámetros:
- *   sensor  - instancia del driver con el handle I2C
- *   reg     - dirección del registro destino (ej: 0x6B para PWR_MGMT_1)
- *   value   - valor a escribir en ese registro
+/**
+ * @brief Escribe un byte en un registro del sensor por I2C.
+ * @param sensor Instancia del driver con el handle I2C.
+ * @param reg    Dirección del registro destino (ej: 0x6B para PWR_MGMT_1).
+ * @param valor  Valor a escribir en ese registro.
+ * @return ESP_OK o código de error I2C.
  */
 static esp_err_t mpu6050_escribir_reg(mpu6050_t *sensor, uint8_t reg, uint8_t valor)
 {
@@ -54,14 +64,15 @@ static esp_err_t mpu6050_escribir_reg(mpu6050_t *sensor, uint8_t reg, uint8_t va
     return i2c_master_transmit(sensor->dev_handle, buf, sizeof(buf), MPU6050_I2C_TIMEOUT_MS);
 }
 
-/*
- * Lee 'len' bytes consecutivos del sensor a partir del registro 'reg'.
- * Implementa reintentos automáticos si hay errores transitorios en el bus.
- * Parámetros:
- *   sensor  - instancia del driver con el handle I2C
- *   reg     - registro de inicio de lectura
- *   salida  - buffer donde se guardan los bytes leídos
- *   len     - cantidad de bytes a leer
+/**
+ * @brief Lee @p len bytes consecutivos del sensor a partir del registro @p reg.
+ * @details Implementa reintentos automáticos si hay errores transitorios en el bus
+ *          (hasta @ref MPU6050_I2C_RETRIES intentos con 5 ms entre cada uno).
+ * @param sensor Instancia del driver con el handle I2C.
+ * @param reg    Registro de inicio de lectura.
+ * @param salida Buffer donde se guardan los bytes leídos.
+ * @param len    Cantidad de bytes a leer.
+ * @return ESP_OK si la lectura fue exitosa; último código de error si todos los intentos fallaron.
  */
 static esp_err_t mpu6050_leer_regs(mpu6050_t *sensor, uint8_t reg, uint8_t *salida, size_t len)
 {
@@ -84,10 +95,13 @@ static esp_err_t mpu6050_leer_regs(mpu6050_t *sensor, uint8_t reg, uint8_t *sali
    FUNCION AUXILIAR
    ============================================================ */
 
-/*
- * Valor absoluto para enteros de 32 bits.
- * La librería estándar abs() no garantiza comportamiento correcto
- * con int32_t en todos los compiladores; por eso se define aquí.
+/**
+ * @brief Valor absoluto para enteros de 32 bits.
+ * @details La función estándar abs() no garantiza comportamiento correcto
+ *          con int32_t en todos los compiladores de ESP-IDF; se define aquí
+ *          como alternativa segura.
+ * @param valor Entero de 32 bits con signo.
+ * @return Valor absoluto del argumento.
  */
 static int32_t mpu6050_abs_i32(int32_t valor)
 {

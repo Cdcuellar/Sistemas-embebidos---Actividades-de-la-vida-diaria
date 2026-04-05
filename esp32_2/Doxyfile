@@ -1,0 +1,31 @@
+# =============================================================
+# Doxyfile — Configuración de documentación para esp32_2
+# Nodo esclavo MPU6050 con ESP-NOW
+# Autor: Carlos Daniel Cuellar Antury
+# Generar con: doxygen Doxyfile
+# Salida:      docs/html/index.html
+# =============================================================
+
+PROJECT_NAME           = "Nodo Esclavo MPU6050"
+PROJECT_BRIEF          = "Firmware ESP32: adquisición IMU + transmisión ESP-NOW"
+PROJECT_NUMBER         = "1.0"
+OUTPUT_DIRECTORY       = docs
+
+INPUT                  = main CMakeLists.txt
+FILE_PATTERNS          = *.c *.h *.cpp
+RECURSIVE              = YES
+
+OUTPUT_LANGUAGE        = Spanish
+EXTRACT_ALL            = YES
+SOURCE_BROWSER         = YES
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
+
+HTML_OUTPUT            = html
+HTML_TIMESTAMP         = YES
+
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
