@@ -1,0 +1,896 @@
+% ===========================================================================
+%  Artículo Académico – Sistema Wearable de Monitoreo de Actividades
+%  de la Vida Diaria basado en ESP32 con ESP-NOW, IMU y Registro en SD
+%  Universidad del Cauca — Departamento de Ingeniería Electrónica
+%  y Telecomunicaciones
+%  Autor: Carlos Daniel Cuellar Antury
+%  Formato: doble columna, 10 pt, Times New Roman, márgenes 2.5 cm, 6 páginas
+% ===========================================================================
+\documentclass[10pt,twocolumn,a4paper]{article}
+
+% --- Paquetes ---------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{mathptmx}
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,
+            columnsep=0.6cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{url}
+
+% --- Encabezado y pie -------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\tiny Univ. del Cauca — Ing. Electrónica y Telecomunicaciones}
+\fancyhead[R]{\tiny Cuellar Antury, C.D. (2024)}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{14pt}
+
+% --- Formato de secciones ---------------------------------------------------
+\titleformat{\section}{\normalfont\bfseries\small}{\thesection.}{0.4em}{}
+\titleformat{\subsection}{\normalfont\bfseries\footnotesize}{\thesubsection.}{0.4em}{}
+\titleformat{\subsubsection}{\normalfont\itshape\footnotesize}{\thesubsubsection.}{0.4em}{}
+\titlespacing{\section}{0pt}{5pt}{2pt}
+\titlespacing{\subsection}{0pt}{3pt}{1pt}
+\titlespacing{\subsubsection}{0pt}{2pt}{1pt}
+
+% --- Listas compactas -------------------------------------------------------
+\setlist{itemsep=1pt,topsep=2pt,parsep=0pt,partopsep=0pt}
+
+% --- Colores para código ----------------------------------------------------
+\definecolor{codegray}{rgb}{0.96,0.96,0.96}
+\definecolor{codeblue}{rgb}{0.0,0.0,0.55}
+\definecolor{codegreen}{rgb}{0.0,0.45,0.0}
+\definecolor{codepurple}{rgb}{0.45,0.0,0.45}
+
+\lstdefinestyle{csrc}{
+  language=C,
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  stringstyle=\color{codepurple},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  stepnumber=1,
+  numbersep=4pt,
+  breaklines=true,
+  showspaces=false,
+  showstringspaces=false,
+  frame=single,
+  rulecolor=\color{black!20},
+  tabsize=2,
+  captionpos=b,
+  aboveskip=4pt,
+  belowskip=2pt,
+  literate=
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+    {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+    {ñ}{{\~n}}1 {Ñ}{{\~N}}1
+}
+
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,
+            breaklinks=true}
+\captionsetup{font=scriptsize,labelfont=bf,skip=3pt}
+
+% ===========================================================================
+\begin{document}
+
+% ---------------------------------------------------------------------------
+%  PORTADA — TÍTULO, AUTOR, AFILIACIÓN, ABSTRACT (una columna)
+% ---------------------------------------------------------------------------
+\twocolumn[{%
+\begin{center}
+  {\large\bfseries Sistema Wearable de Monitoreo de Actividades de la Vida\\[2pt]
+  Diaria basado en ESP32: Arquitectura Distribuida con ESP-NOW,\\[2pt]
+  IMU, Pantalla Táctil y Registro en Tarjeta SD}\\[6pt]
+  {\normalsize Carlos Daniel Cuellar Antury}\\[2pt]
+  {\small Departamento de Ingeniería Electrónica y Telecomunicaciones,
+  Universidad del Cauca, Popayán, Colombia}\\[2pt]
+  {\footnotesize Repositorio: \url{https://github.com/Cdcuellar/Sistemas-embebidos---Actividades-de-la-vida-diaria}}\\[6pt]
+  \rule{\linewidth}{0.5pt}\\[4pt]
+\end{center}
+\begin{small}
+\noindent\textbf{Resumen} — Este artículo describe el diseño e implementación de un
+sistema embebido distribuido para el monitoreo de Actividades de la Vida Diaria
+(AVD), desarrollado como proyecto académico en la Universidad del Cauca. El
+sistema adopta una arquitectura de tres nodos ESP32 interconectados mediante el
+protocolo ESP-NOW: un nodo maestro que integra un sensor de frecuencia cardíaca
+(ADC), reloj de tiempo real DS3231, almacenamiento en tarjeta microSD y
+comunicación inalámbrica; un nodo esclavo de movimiento con sensor inercial
+MPU6050 (acelerómetro y giroscopio 6-DOF); y un nodo esclavo con pantalla
+circular táctil GC9A01 de 1,28'' y sensor QMI8658. Adicionalmente, se documenta
+una herramienta de diagnóstico que identifica el registro \texttt{WHO\_AM\_I}
+del MPU6050 y una utilidad de obtención de dirección MAC. El firmware se
+desarrolló con ESP-IDF~v6.0, FreeRTOS y gestión de energía con escalado dinámico
+de frecuencia. Los resultados muestran transmisión estable a 100~ms (IMU) y
+50~ms (touch/IMU-S3), con registro CSV local y visualización en tiempo real.
+
+\smallskip
+\noindent\textbf{Palabras clave} — Wearable, AVD, ESP32, ESP-NOW, MPU6050,
+QMI8658, FreeRTOS, ESP-IDF, tarjeta SD, I2C, pantalla táctil, frecuencia
+cardíaca.
+
+\smallskip
+\noindent\textbf{Abstract} — This paper describes the design and implementation
+of a distributed embedded system for monitoring Activities of Daily Living (ADL),
+developed as an academic project at Universidad del Cauca. The system adopts a
+three-node ESP32 architecture interconnected via the ESP-NOW protocol: a master
+node integrating a heart-rate sensor (ADC), DS3231 real-time clock, microSD
+storage, and wireless communication; a motion slave node with an MPU6050
+inertial sensor (6-DOF accelerometer and gyroscope); and a slave node with a
+1.28'' GC9A01 circular touch display and QMI8658 sensor. Additionally, a
+diagnostic tool that identifies the MPU6050 \texttt{WHO\_AM\_I} register and a
+MAC address utility are documented. Firmware was developed with ESP-IDF~v6.0,
+FreeRTOS, and dynamic frequency scaling power management. Results show stable
+transmission at 100~ms (IMU node) and 50~ms (touch/IMU-S3 node), with local CSV
+logging and real-time display.
+
+\smallskip
+\noindent\textbf{Keywords} — Wearable, ADL, ESP32, ESP-NOW, MPU6050, QMI8658,
+FreeRTOS, ESP-IDF, SD card, I2C, touch display, heart rate.
+\end{small}
+\vspace{4pt}\rule{\linewidth}{0.5pt}\vspace{4pt}
+}]
+
+% ---------------------------------------------------------------------------
+%  1. INTRODUCCIÓN
+% ---------------------------------------------------------------------------
+\section{Introducción}
+
+El envejecimiento poblacional, el aumento de las enfermedades crónicas y
+el interés creciente por la telemedicina han impulsado el desarrollo de
+sistemas wearables capaces de monitorear de forma continua y no intrusiva
+las Actividades de la Vida Diaria (AVD) de los pacientes~\cite{chen2012}.
+Estos sistemas registran señales biométricas y biomecánicas —frecuencia
+cardíaca, postura, movimiento— para apoyar diagnósticos clínicos,
+programas de rehabilitación y asistencia a personas mayores.
+
+En este contexto, la familia de microcontroladores ESP32 (Espressif
+Systems) presenta características sobresalientes para aplicaciones
+wearables: bajo consumo, conectividad inalámbrica nativa (WiFi +
+Bluetooth), múltiples interfaces de periféricos y un ecosistema de
+desarrollo maduro basado en ESP-IDF~\cite{espressif2023}. El protocolo
+ESP-NOW, en particular, permite la transmisión directa punto a punto de
+tramas de hasta 250~bytes entre dispositivos ESP32 sin necesidad de un
+router intermedio, con latencias del orden de los milisegundos y un
+consumo energético significativamente menor al de WiFi
+convencional~\cite{espnow_docs}.
+
+El presente artículo documenta el diseño completo de un sistema wearable
+distribuido para monitoreo de AVD, publicado como proyecto de código
+abierto en GitHub~\cite{repo_github}. El sistema comprende cuatro
+submódulos funcionales: (1)~un nodo maestro encargado de centralizar
+datos, sincronizar la hora con un RTC y registrar en SD; (2)~un nodo
+esclavo de movimiento basado en MPU6050; (3)~un nodo esclavo con
+pantalla circular táctil y sensor QMI8658; y (4)~herramientas de apoyo
+para diagnóstico de hardware.
+
+\subsection{Objetivos}
+
+\begin{itemize}
+  \item Diseñar una arquitectura distribuida de tres nodos ESP32
+        interconectados por ESP-NOW para captura y centralización de
+        datos de AVD.
+  \item Implementar firmware con FreeRTOS, gestión de energía y
+        comunicación robusta en cada nodo.
+  \item Documentar el código fuente, esquemas de conexión y resultados
+        para su reproducibilidad pública en GitHub.
+\end{itemize}
+
+% ---------------------------------------------------------------------------
+%  2. ESTADO DEL ARTE
+% ---------------------------------------------------------------------------
+\section{Estado del Arte}
+
+El reconocimiento de AVD mediante sistemas inerciales es un campo
+ampliamente estudiado. Anguita \textit{et al.}~\cite{anguita2012}
+publicaron un \textit{dataset} de referencia con acelerómetro de
+teléfono inteligente y 30 sujetos, logrando tasas de clasificación
+$>$96\% con SVM para seis clases (caminar, subir escaleras, sentarse,
+acostarse, estar de pie, tumbarse). Chen \textit{et al.}~\cite{chen2012}
+revisaron sistemáticamente más de 200 trabajos en reconocimiento de
+actividad basado en sensores, identificando IMUs de bajo coste, fusión
+sensorial y clasificación automática como las tendencias dominantes
+para aplicaciones de monitoreo de salud ambiental y asistida.
+
+El ESP32 se ha posicionado como plataforma de referencia para sistemas
+wearables académicos e industriales de bajo coste. Kolban~\cite{kolban2017}
+documenta en detalle la arquitectura dual-core, el sistema de gestión
+de energía con sus modos activo, modem-sleep, light-sleep, deep-sleep y
+hibernación, y la pila de red WiFi/BT. El protocolo ESP-NOW permite la
+transmisión directa punto a punto de tramas de hasta 250~bytes entre
+ESP32 sin router intermedio, con latencias de 2--5~ms y un consumo
+significativamente menor al de WiFi convencional~\cite{espnow_docs}.
+
+La combinación de ESP-NOW con FreeRTOS y gestión dinámica de frecuencia
+(DFS) ha sido reportada como estrategia efectiva para extender la vida
+útil de la batería sin comprometer la tasa de muestreo en aplicaciones
+de redes de área corporal (BAN). El presente trabajo adopta esta
+arquitectura e implementa todos sus componentes con el nivel de detalle
+requerido para su reproducción pública mediante un repositorio GitHub
+de acceso abierto~\cite{repo_github}.
+
+Respecto al sensor MPU6050~\cite{invensense2013}, su uso masivo en el
+mercado de componentes ha generado un problema documentado de clones
+con identificadores \texttt{WHO\_AM\_I} distintos al estándar
+\texttt{0x68}. Este trabajo aborda dicha problemática mediante una
+herramienta de diagnóstico dedicada que se integra al flujo de puesta
+en marcha del hardware, contribuyendo a la trazabilidad experimental.
+
+La pantalla circular GC9A01 de 1,28'' ha emergido como opción atractiva
+para wearables compactos por su bajo consumo, resolución 240$\times$240~px
+y soporte para renderizado eficiente por SPI a 40~MHz. La combinación
+con el ESP32-S3 y la IMU QMI8658 en módulos integrados abre nuevas
+posibilidades para interfaces de usuario en monitoreo biomédico.
+
+% ---------------------------------------------------------------------------
+%  3. ARQUITECTURA DEL SISTEMA
+% ---------------------------------------------------------------------------
+\section{Arquitectura del Sistema}
+\label{sec:arq}
+
+El sistema adopta una topología estrella con un nodo maestro y dos
+nodos esclavos. La Figura~\ref{fig:arq} ilustra la arquitectura
+general.
+
+\begin{figure}[H]
+\centering
+\scriptsize
+\begin{verbatim}
+ +---------------------------+
+ |   NODO MAESTRO (ESP32)    |
+ |  ADC: Pulso (GPIO34)      |
+ |  I2C: DS3231 RTC          |
+ |  SPI: microSD (datos.csv) |
+ |  ESP-NOW: Recepción       |
+ +----+-----------+----------+
+      |           |
+   ESP-NOW     ESP-NOW
+      |           |
+ +----+---+  +----+------+
+ | NODO 2 |  |  NODO 3   |
+ | MPU6050|  | QMI8658   |
+ | I2C    |  | GC9A01    |
+ | 100 ms |  | CST816S   |
+ +--------+  | 50 ms     |
+             +-----------+
+\end{verbatim}
+\caption{Arquitectura distribuida del sistema wearable AVD}
+\label{fig:arq}
+\end{figure}
+
+La Tabla~\ref{tab:nodos} resume las características principales de
+cada nodo.
+
+\begin{table}[H]
+\centering
+\caption{Resumen de nodos del sistema}
+\label{tab:nodos}
+\scriptsize
+\begin{tabular}{p{1.2cm}p{1.4cm}p{3.1cm}}
+\toprule
+\textbf{Nodo} & \textbf{MCU} & \textbf{Función principal} \\
+\midrule
+Maestro & ESP32 & Centraliza datos, RTC, SD, pulso \\
+Esclavo 2 & ESP32 & IMU MPU6050, roll/pitch, ESP-NOW \\
+Esclavo 3 & ESP32-S3 & IMU QMI8658, pantalla táctil, ESP-NOW \\
+Herr. & ESP32 & Diagnóstico WHO\_AM\_I (Arduino IDE) \\
+MAC & ESP32 & Obtención de dirección MAC WiFi \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Protocolo de Comunicación ESP-NOW}
+
+ESP-NOW opera sobre la capa física 802.11 en modo ad-hoc sin
+asociación a un punto de acceso~\cite{espnow_docs}. Los paquetes
+tienen una carga útil máxima de 250~bytes y viajan con confirmación
+de entrega (ACK de capa 2). En este sistema, todos los nodos utilizan
+la misma estructura de 32~bytes (8~floats) para los datos IMU:
+
+\begin{lstlisting}[style=csrc, numbers=none,
+  caption={Estructura de datos transmitida por ESP-NOW (32 bytes)},
+  label=lst:struct]
+typedef struct {
+    float roll, pitch;       // Angulos (grados)
+    float acc_x, acc_y, acc_z; // Aceleracion (g)
+    float gyr_x, gyr_y, gyr_z; // Giro (deg/s)
+} datos_imu_t; // 8 x 4 bytes = 32 bytes exactos
+\end{lstlisting}
+
+La consistencia del tamaño se verifica en tiempo de compilación con
+\texttt{\_Static\_assert(sizeof(...) == 32, ...)}, garantizando la
+compatibilidad entre nodos incluso frente a cambios futuros.
+
+% ---------------------------------------------------------------------------
+%  4. DISEÑO E IMPLEMENTACIÓN POR NODO
+% ---------------------------------------------------------------------------
+\section{Diseño e Implementación}
+\label{sec:impl}
+
+\subsection{Nodo Maestro (esp32\_1\_hr\_rstc\_sd\_master)}
+
+El nodo maestro es el controlador central del sistema. Ejecuta múltiples
+tareas FreeRTOS concurrentes bajo un único mutex para proteger el
+contenedor de datos compartidos (\texttt{log\_completo\_t}).
+
+\subsubsection{Sensor de Frecuencia Cardíaca}
+
+La frecuencia cardíaca se adquiere localmente mediante el ADC del ESP32
+en el canal 6 (GPIO~34). Se implementa un filtro en dos etapas:
+\begin{enumerate}
+  \item Ráfaga de 8 muestras con media recortada (se descartan máximo y
+        mínimo).
+  \item Filtro de media exponencial (EMA con $\alpha=0{,}85$) sobre la
+        señal resultante, seguido de eliminación de componente DC con
+        una segunda EMA ($\alpha=0{,}98$) como línea de base.
+\end{enumerate}
+
+Esta cadena de procesamiento reduce el ruido eléctrico inherente a la
+lectura analógica sobre el bus de alimentación del ESP32.
+
+\subsubsection{Reloj de Tiempo Real DS3231}
+
+El DS3231 se comunica vía I2C (GPIO~21 SDA, GPIO~22 SCL, dirección
+\texttt{0x68}) a 100~kHz. Los registros de tiempo se leen en formato
+BCD y se convierten a \texttt{struct~tm}. El firmware permite
+sincronización de hora desde consola mediante el comando \texttt{SETTIME}
+por puerto serie.
+
+\subsubsection{Registro en microSD}
+
+Los datos se acumulan en un buffer RAM de 60 filas y se vuelcan cada
+minuto al archivo \texttt{/sdcard/datos.csv} mediante el sistema de
+archivos FAT (ESP-VFS-FAT). La interfaz SPI se configura en el slot
+SPI3 (GPIO~23 MOSI, GPIO~19 MISO, GPIO~18 SCK, GPIO~5 CS). Esta
+estrategia reduce el número de operaciones de escritura en flash y
+mejora la vida útil de la tarjeta.
+
+\subsubsection{Gestión de Energía}
+
+El maestro implementa escalado dinámico de frecuencia (DFS):
+CPU a 240~MHz en modo activo, 80~MHz en modo normal y 10~MHz en modo
+inactivo. Adicionalmente se habilita \textit{WiFi Power Save}
+(\texttt{WIFI\_PS\_MIN\_MODEM}, ahorro $\sim$20~mA) y \textit{Light
+Sleep} con fallback si el hardware no lo soporta. El log en consola se
+reduce a cada 10~s para minimizar el overhead de UART.
+
+\subsection{Nodo Esclavo 2 — Movimiento (esp32\_2)}
+
+El nodo de movimiento adquiere datos del sensor MPU6050 cada 100~ms y
+los envía al maestro cada 500~ms mediante ESP-NOW. Utiliza dos tareas
+FreeRTOS protegidas por un mutex binario:
+
+\begin{itemize}
+  \item \textbf{Tarea de muestreo}: lee los 14~bytes del MPU6050
+        (acelerómetro + giroscopio + temperatura) en una única
+        transacción I2C, aplica los offsets de calibración y calcula
+        roll/pitch.
+  \item \textbf{Tarea de envío}: copia atómicamente los datos con el
+        mutex y los transmite por ESP-NOW.
+\end{itemize}
+
+\subsubsection{Driver MPU6050 (mpu6050.c/h)}
+
+Se implementó un driver C completo y documentado con Doxygen para el
+MPU6050 usando el nuevo driver I2C master de ESP-IDF~v5+
+(\texttt{driver/i2c\_master.h}). Sus funciones principales son:
+
+\begin{table}[H]
+\centering
+\caption{API del driver MPU6050}
+\label{tab:api_mpu}
+\scriptsize
+\begin{tabular}{p{2.8cm}p{3.9cm}}
+\toprule
+\textbf{Función} & \textbf{Descripción} \\
+\midrule
+\texttt{mpu6050\_init()} & Inicializa I2C, verifica WHO\_AM\_I, configura rangos \\
+\texttt{mpu6050\_calibrate()} & Promedia N muestras, calcula y almacena offsets \\
+\texttt{mpu6050\_read\_accel\_raw()} & Lee 3 ejes del acelerómetro (6 bytes) \\
+\texttt{mpu6050\_read\_all\_raw()} & Lee los 14 bytes completos (accel + temp + gyro) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La función \texttt{mpu6050\_init()} acepta los valores \texttt{0x68},
+\texttt{0x69} y \texttt{0x72} en el registro \texttt{WHO\_AM\_I}
+(dirección \texttt{0x75}), cubriendo tanto el MPU6050 original como
+variantes de silicio detectadas durante el desarrollo.
+
+\subsubsection{Calibración del MPU6050}
+
+La calibración del sensor se realiza automáticamente al arrancar el
+Nodo~2, mediante la función \texttt{mpu6050\_calibrate()}, que toma
+100~muestras con el sensor estático y calcula los offsets de cada eje:
+
+\begin{equation}
+  \text{offset}_i = \frac{1}{N}\sum_{k=1}^{N} \text{raw}_{i,k} \qquad
+  (i \in \{a_x, a_y, a_z, g_x, g_y, g_z\})
+  \label{eq:calib}
+\end{equation}
+
+El eje $a_z$ se corrige restando el equivalente a 1~g en LSB
+(16384 para rango $\pm$2~g) para que el reposo sobre superficie plana
+reporte $a_z = 1\text{ g}$ y no $0\text{ g}$.
+
+Los offsets quedan almacenados en la estructura \texttt{mpu6050\_t}
+y se aplican automáticamente en cada llamada a
+\texttt{mpu6050\_read\_all\_raw()}, sin necesidad de post-procesamiento
+en la aplicación.
+
+\subsubsection{Robustez en la Comunicación I2C}
+
+El driver implementa reintentos automáticos con hasta 5 intentos y
+5~ms de espera entre cada uno para lecturas de registros. Para la
+lectura del \texttt{WHO\_AM\_I} en la inicialización se permite hasta
+20~reintentos, dado que algunos clones del sensor requieren más tiempo
+para responder tras el reset. Esta estrategia mejora significativamente
+la tasa de éxito en la inicialización del sistema con hardware de
+terceros.
+
+\begin{equation}
+  \text{Roll} = \arctan\!\left(\frac{a_y}{a_z}\right)\cdot\frac{180°}{\pi}
+  \label{eq:roll}
+\end{equation}
+\begin{equation}
+  \text{Pitch} = \arctan\!\left(\frac{-a_x}{\sqrt{a_y^2+a_z^2}}\right)\cdot\frac{180°}{\pi}
+  \label{eq:pitch}
+\end{equation}
+
+Estas fórmulas proporcionan ángulos estables en condiciones cuasi-estáticas
+(sin vibración) con rango $\pm90°$.
+
+\subsection{Nodo Esclavo 3 — Touch/Display (esp\_32\_s3\_touch\_1.28)}
+
+El tercer nodo usa un ESP32-S3 con pantalla circular GC9A01 de 1,28''
+(240$\times$240 px, SPI a 40~MHz) y sensor táctil capacitivo CST816S.
+Su función dual es: (a)~visualizar un nivel de burbuja animado en tiempo
+real; y (b)~transmitir datos de movimiento al maestro por ESP-NOW a 50~ms
+(20~Hz). El nodo también mide el voltaje de batería mediante un divisor
+resistivo en el ADC.
+
+\subsubsection{Sensor IMU QMI8658}
+
+El QMI8658 es la IMU interna del módulo ESP32-S3 Wearable 1.28'', con
+interfaz I2C en GPIO~6 (SDA) y GPIO~7 (SCL) a 400~kHz (dirección
+\texttt{0x6B}). Sus rangos configurados son $\pm$8~g para el
+acelerómetro (4096~LSB/g) y $\pm$512~°/s para el giroscopio (64~LSB/(°/s)).
+
+\subsubsection{Filtro Complementario}
+
+Para estimar los ángulos con mayor precisión que las ecuaciones~\ref{eq:roll}
+y~\ref{eq:pitch}, se aplica un filtro complementario:
+
+\begin{equation}
+  \theta_k = \alpha_g(\theta_{k-1} + \omega\,\Delta t) + \alpha_a\,\theta_{\text{acc}}
+  \label{eq:comp}
+\end{equation}
+
+donde $\alpha_g=0{,}98$ (peso del giroscopio) y $\alpha_a=0{,}02$ (peso
+del acelerómetro), con período $\Delta t=50$~ms. Este filtro corrige la
+deriva del giroscopio usando la inclinación de largo plazo del
+acelerómetro.
+
+\subsubsection{Nivel de Burbuja Visual}
+
+La posición de la burbuja en pantalla se mapea directamente a los
+ángulos roll/pitch según:
+$x_b = 120 + \text{roll}\cdot k$,
+$y_b = 120 - \text{pitch}\cdot k$,
+donde $k$ es un factor de escala de píxeles por grado. La pantalla
+se apaga automáticamente tras 10~s sin interacción táctil para
+ahorrar energía.
+
+\subsection{FreeRTOS y Sincronización entre Tareas}
+
+La arquitectura de software de cada nodo se basa en FreeRTOS con
+múltiples tareas concurrentes protegidas por mutexes. La
+Tabla~\ref{tab:tareas} resume las tareas de cada nodo.
+
+\begin{table}[H]
+\centering
+\caption{Tareas FreeRTOS por nodo}
+\label{tab:tareas}
+\scriptsize
+\begin{tabular}{p{1.5cm}p{2.0cm}p{2.7cm}}
+\toprule
+\textbf{Nodo} & \textbf{Tarea} & \textbf{Función} \\
+\midrule
+Maestro & task\_rx\_espnow & Recepción paquetes ESP-NOW \\
+Maestro & task\_rtc & Lectura periódica del DS3231 \\
+Maestro & task\_adc\_pulso & Adquisición pulso + filtrado \\
+Maestro & task\_sd\_log & Volcado CSV a microSD \\
+Nodo 2 & tarea\_muestreo & Lectura MPU6050 cada 100 ms \\
+Nodo 2 & tarea\_envio & Envío ESP-NOW cada 500 ms \\
+Nodo 3 & tarea\_imu & Lectura QMI8658 + filtro comp. \\
+Nodo 3 & tarea\_espnow & Envío paquete cada 50 ms \\
+Nodo 3 & tarea\_display & Renderizado pantalla GC9A01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El patrón de sincronización es consistente en todos los nodos: la tarea
+productora (lectura del sensor) adquiere el mutex, actualiza el buffer
+compartido y libera el mutex; la tarea consumidora (envío o registro)
+también adquiere el mutex, copia los datos y los procesa de forma
+independiente. Este desacoplamiento evita que una operación lenta (p.ej.
+escritura en SD o transmisión ESP-NOW) bloquee la adquisición de datos.
+
+\subsection{Estructura del Repositorio GitHub}
+
+La Tabla~\ref{tab:repo} documenta la estructura de carpetas del
+repositorio y la función de cada módulo.
+
+\begin{table}[H]
+\centering
+\caption{Estructura del repositorio GitHub}
+\label{tab:repo}
+\scriptsize
+\begin{tabular}{p{3.0cm}p{3.7cm}}
+\toprule
+\textbf{Directorio} & \textbf{Contenido} \\
+\midrule
+\texttt{esp32\_1\_hr\_rstc\_sd\_master/} & Nodo maestro: RTC, SD, pulso, ESP-NOW \\
+\texttt{esp32\_2/} & Nodo IMU: MPU6050, driver C, ESP-NOW \\
+\texttt{esp\_32\_s3\_touch\_1.28/} & Nodo touch: QMI8658, GC9A01, CST816S \\
+\texttt{Direccion mac/} & Utilidad de lectura de MAC WiFi \\
+\texttt{herramienta\_who\_i\_am\_*/} & Diagnóstico WHO\_AM\_I (Arduino IDE) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Cada directorio de proyecto ESP-IDF contiene \texttt{CMakeLists.txt},
+\texttt{Doxyfile} para generación de documentación automática,
+\texttt{.devcontainer/} para entorno Docker reproducible,
+y \texttt{.vscode/} con configuración de depuración remota por OpenOCD.
+\label{sec:who}
+
+Durante la fase de integración del Nodo~2, se detectó que la biblioteca
+de producción rechazaba el MPU6050 por discrepancia en el registro
+\texttt{WHO\_AM\_I}. Se desarrolló una herramienta mínima en Arduino
+IDE que lee directamente el registro \texttt{0x75} vía I2C y reporta
+el valor real del silicio por el monitor serie a 115\,200~baudios. El
+valor obtenido fue \texttt{0x72}, que difiere del \texttt{0x68}
+estándar del datasheet. Esta información se incorporó al driver de
+producción \texttt{mpu6050.c} como condición de aceptación.
+
+\subsection{Utilidad de Dirección MAC (Direccion\_mac)}
+
+Para configurar correctamente la tabla de peers de ESP-NOW, se desarrolló
+una utilidad independiente en ESP-IDF que inicializa WiFi en modo STA y
+reporta la dirección MAC de 6~bytes del ESP32 por el puerto serie:
+
+\begin{lstlisting}[style=csrc, numbers=none,
+  caption={Lectura de MAC WiFi en ESP-IDF},
+  label=lst:mac]
+uint8_t mac[6];
+esp_wifi_get_mac(WIFI_IF_STA, mac);
+printf("MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+       mac[0],mac[1],mac[2],
+       mac[3],mac[4],mac[5]);
+\end{lstlisting}
+
+Las MACs obtenidas se usaron para configurar los arrays
+\texttt{mac\_esclavo\_mpu} y \texttt{mac\_esclavo\_touch} en el
+firmware del nodo maestro.
+
+% ---------------------------------------------------------------------------
+%  5. RESULTADOS
+% ---------------------------------------------------------------------------
+\section{Resultados}
+\label{sec:res}
+
+\subsection{Configuración Global de Hardware}
+
+La Tabla~\ref{tab:hw} resume la configuración de pines de todos los
+nodos del sistema.
+
+\begin{table}[H]
+\centering
+\caption{Configuración de hardware de los nodos}
+\label{tab:hw}
+\scriptsize
+\begin{tabular}{p{1.2cm}p{1.4cm}p{1.4cm}p{1.6cm}}
+\toprule
+\textbf{Nodo} & \textbf{Interfaz} & \textbf{Pines} & \textbf{Periférico} \\
+\midrule
+Maestro & I2C & GPIO21/22 & DS3231 RTC \\
+Maestro & SPI3 & 23/19/18/5 & MicroSD \\
+Maestro & ADC1-CH6 & GPIO34 & Pulso (HR) \\
+Nodo 2 & I2C & GPIO21/22 & MPU6050 \\
+Nodo 3 & I2C & GPIO6/7 & QMI8658, CST816S \\
+Nodo 3 & SPI2 & 11/10/9/8 & GC9A01 display \\
+Nodo 3 & ADC & CH0 & Batería \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Transmisión ESP-NOW y Tasa de Muestreo}
+
+La Tabla~\ref{tab:perf} resume las tasas de muestreo y transmisión
+configuradas en los nodos esclavos y la política de detección de
+desconexión del maestro.
+
+\begin{table}[H]
+\centering
+\caption{Rendimiento de comunicación del sistema}
+\label{tab:perf}
+\scriptsize
+\begin{tabular}{p{1.9cm}p{1.3cm}p{1.5cm}p{1.1cm}}
+\toprule
+\textbf{Nodo} & \textbf{Muestreo} & \textbf{Envío ESP-NOW} & \textbf{Timeout} \\
+\midrule
+Nodo 2 (MPU6050) & 100 ms & 500 ms & 1000 ms \\
+Nodo 3 (S3 Touch) & 50 ms & 50 ms & 1000 ms \\
+Maestro (log SD) & -- & -- & 60 s/bloque \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El maestro detecta desconexión de cualquier nodo si no se recibe un
+paquete válido en más de 1000~ms, activando las banderas
+\texttt{mpu\_desconectado} y \texttt{touch\_desconectado} que se
+reflejan en el log CSV.
+
+\subsection{Gestión de Energía}
+
+La Tabla~\ref{tab:power} muestra el impacto de las optimizaciones
+energéticas implementadas.
+
+\begin{table}[H]
+\centering
+\caption{Configuración de gestión de energía}
+\label{tab:power}
+\scriptsize
+\begin{tabular}{p{3.0cm}p{3.7cm}}
+\toprule
+\textbf{Técnica} & \textbf{Configuración / Ahorro} \\
+\midrule
+DFS (maestro) & 240→80→10 MHz según carga \\
+WiFi Power Save & WIFI\_PS\_MIN\_MODEM ($\approx$20 mA ahorro) \\
+Light Sleep & Fallback si no soportado \\
+TX power ESP-NOW & 10 dBm (40 unidades) \\
+Pantalla (nodo 3) & Apagado auto tras 10 s sin táctil \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Formato de Registro CSV}
+
+Cada fila del archivo \texttt{datos.csv} en la tarjeta SD contiene un
+registro temporal completo con granularidad de 1~segundo:
+
+\begin{lstlisting}[style=csrc, numbers=none,
+  caption={Cabecera del archivo datos.csv en la tarjeta SD},
+  label=lst:csv]
+timestamp,pulso_raw,
+roll_mpu,pitch_mpu,ax_mpu,ay_mpu,az_mpu,
+gx_mpu,gy_mpu,gz_mpu,
+roll_tch,pitch_tch,...,
+estado_mpu,estado_touch
+\end{lstlisting}
+
+Los campos \texttt{estado\_mpu} y \texttt{estado\_touch} indican si los
+nodos esclavos estaban conectados en el instante del registro. El buffer
+en RAM de 60 filas se vacía al disco cada 60~s, reduciendo el desgaste
+de la tarjeta SD y el overhead de escritura en comparación con un volcado
+fila a fila.
+
+\subsection{Herramienta WHO\_AM\_I: Resultado Experimental}
+
+La herramienta de diagnóstico (\texttt{herramienta\_who\_i\_am\_id\_ interno\_arduino\_ide.ino}) arrojó el siguiente resultado al ejecutarse
+sobre el hardware del Nodo~2:
+
+\begin{lstlisting}[style=csrc, numbers=none,
+  caption={Salida del Monitor Serie de la herramienta diagnóstica},
+  label=lst:out_who]
+Leyendo WHO_AM_I...
+WHO_AM_I: 0x72
+\end{lstlisting}
+
+La Tabla~\ref{tab:who} clasifica los posibles resultados.
+
+\begin{table}[H]
+\centering
+\caption{Diagnóstico por valor del registro WHO\_AM\_I (0x75)}
+\label{tab:who}
+\scriptsize
+\begin{tabular}{p{0.9cm}p{0.9cm}p{4.0cm}}
+\toprule
+\textbf{Valor} & \textbf{Estado} & \textbf{Acción recomendada} \\
+\midrule
+0x72 & \textcolor{green!60!black}{\bfseries OK} & Hardware del proyecto; driver acepta este valor \\
+0x68 & \textcolor{green!60!black}{\bfseries OK} & MPU6050 original; sin cambios en driver \\
+0x98 & \textcolor{orange}{\bfseries ALERTA} & Revisar máscara del driver \\
+--- & \textcolor{red}{\bfseries ERROR} & Sin respuesta; verificar cableado \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------------
+%  6. DISCUSIÓN
+% ---------------------------------------------------------------------------
+\section{Discusión}
+\label{sec:disc}
+
+\subsection{Decisiones de Diseño Arquitectónico}
+
+La elección de una topología estrella con ESP-NOW frente a alternativas
+como BLE mesh o Zigbee se justifica por tres razones: (a)~los módulos
+ESP32 ya incluyen el transceptor WiFi necesario sin costo adicional;
+(b)~ESP-NOW opera en la misma banda de 2,4~GHz sin requerir un gateway
+de red; y (c)~la implementación en ESP-IDF es directa y bien documentada
+con ejemplos de código de referencia.
+
+La separación de responsabilidades entre el Nodo~2 (movimiento de
+tronco, MPU6050) y el Nodo~3 (interfaz táctil, QMI8658) permite una
+modularidad que facilita el reemplazo o actualización de cualquier nodo
+sin afectar los demás. La compatibilidad de la estructura
+\texttt{datos\_imu\_t} entre nodos —garantizada por
+\texttt{\_Static\_assert}— es un ejemplo de diseño defensivo que
+previene errores silenciosos de compatibilidad de datos.
+
+\subsection{Limitaciones del Sistema}
+
+\begin{enumerate}
+  \item \textbf{Sensor de pulso}: La lectura analógica por ADC es
+        susceptible a ruido eléctrico y movimiento (artefactos de
+        movimiento). Para uso clínico se recomendaría un sensor
+        dedicado con interfaz I2C (p.ej. MAX30102).
+  \item \textbf{Sincronización temporal}: La sincronización del RTC
+        requiere intervención manual por consola. Un módulo NTP sobre
+        WiFi proporcionaría sincronización automática.
+  \item \textbf{Clasificación}: El sistema actual solo captura y
+        registra datos; no implementa clasificación automática de
+        AVD en tiempo real.
+  \item \textbf{Alcance ESP-NOW}: El alcance típico en interiores es
+        de 50--100~m en línea de visión directa, lo que puede
+        ser insuficiente en entornos hospitalarios amplios.
+\end{enumerate}
+
+\subsection{Reproducibilidad y Código Abierto}
+
+Todo el código fuente, incluyendo los drivers, las configuraciones de
+CMake, los Doxyfiles de documentación y los binarios precompilados en
+formato ELF y BIN, se encuentra disponible en el repositorio
+GitHub~\cite{repo_github}. Cada carpeta de proyecto contiene su propio
+\texttt{CMakeLists.txt} compatible con ESP-IDF~v6.0 y su
+\texttt{devcontainer.json} para desarrollo en contenedores Docker,
+facilitando la reproducción del entorno de compilación en cualquier
+sistema operativo.
+
+\subsection{Comparativa de Sensores IMU}
+
+La Tabla~\ref{tab:imu_comp} compara las dos IMUs utilizadas en el sistema.
+
+\begin{table}[H]
+\centering
+\caption{Comparativa entre MPU6050 y QMI8658}
+\label{tab:imu_comp}
+\scriptsize
+\begin{tabular}{p{2.2cm}p{2.1cm}p{2.1cm}}
+\toprule
+\textbf{Parámetro} & \textbf{MPU6050} & \textbf{QMI8658} \\
+\midrule
+Ejes & 6-DOF & 6-DOF \\
+Interfaz & I2C/SPI & I2C/SPI \\
+Aceler. rango & $\pm$2--16~g & $\pm$2--8~g \\
+Giro rango & $\pm$250--2000~°/s & $\pm$16--512~°/s \\
+ADC resolución & 16 bits & 16 bits \\
+Dirección I2C & 0x68/0x69 & 0x6A/0x6B \\
+Nodo & Esclavo 2 & Esclavo 3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------------
+%  7. CONCLUSIONES Y TRABAJO FUTURO
+% ---------------------------------------------------------------------------
+\section{Conclusiones}
+\label{sec:conc}
+
+\begin{enumerate}
+  \item Se diseñó e implementó un sistema wearable distribuido de tres
+        nodos ESP32 para monitoreo de AVD, con comunicación inalámbrica
+        por ESP-NOW, adquisición de datos IMU, frecuencia cardíaca, RTC
+        y registro en tarjeta SD.
+
+  \item La arquitectura maestro-esclavo con ESP-NOW proporciona
+        latencias del orden de los milisegundos con bajo overhead de
+        firmware, y la topología estrella simplifica la sincronización
+        y el registro centralizado.
+
+  \item El driver MPU6050 en C para ESP-IDF~v5+, con soporte de
+        calibración y variantes de silicio (\texttt{WHO\_AM\_I} =
+        \texttt{0x72}), constituye un componente reutilizable y
+        documentado para proyectos de instrumentación inercial.
+
+  \item El Nodo~3 demuestra la viabilidad de integrar IMU, pantalla
+        circular táctil y comunicación inalámbrica en un único módulo
+        ESP32-S3 de factor de forma compacto, con filtro complementario
+        para estimación de ángulos de alta calidad.
+
+  \item El código fuente completo, esquemas de conexión, binarios
+        compilados y herramientas de diagnóstico están publicados en
+        el repositorio GitHub~\cite{repo_github}, promoviendo la
+        reproducibilidad y la transferencia tecnológica.
+\end{enumerate}
+
+\subsection{Trabajo Futuro}
+
+\begin{itemize}
+  \item Integrar algoritmos de clasificación de AVD (SVM, LSTM) en
+        el nodo maestro aprovechando los 520~KB de SRAM del ESP32.
+  \item Añadir transmisión a nube (MQTT/HTTPS) para monitoreo remoto
+        en tiempo real.
+  \item Implementar sincronización de tiempo NTP con fallback al RTC
+        DS3231 para timestamping de alta precisión.
+  \item Explorar reducción del consumo con ESP32-C6 y protocolo
+        IEEE 802.15.4 (Thread/Zigbee) para redes de sensores corporales
+        de mayor densidad.
+\end{itemize}
+
+% ---------------------------------------------------------------------------
+%  REFERENCIAS
+% ---------------------------------------------------------------------------
+\begin{thebibliography}{9}
+
+\bibitem{chen2012}
+L. Chen, J. Hoey, C. D. Nugent, D. J. Cook y Z. Yu,
+``Sensor-based activity recognition,'' \textit{IEEE Trans. Syst.,
+Man, Cybern. Part C}, vol.~42, no.~6, pp.~790--808, Nov.~2012,
+doi: 10.1109/TSMCC.2012.2198883.
+
+\bibitem{anguita2012}
+D. Anguita, A. Ghio, L. Oneto, X. Parra y J. L. Reyes-Ortiz,
+``Human activity recognition on smartphones using a multiclass
+hardware-friendly support vector machine,'' en \textit{Proc. IWAAL},
+Vitoria-Gasteiz, 2012, pp.~216--223.
+
+\bibitem{espressif2023}
+Espressif Systems, \textit{ESP32 Technical Reference Manual}, v5.1,
+Shanghai, 2023. [En línea]. Disp.:
+\url{https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf}
+
+\bibitem{espnow_docs}
+Espressif Systems, \textit{ESP-NOW User Guide}, v2.0,
+ESP-IDF Programming Guide, 2024. [En línea]. Disp.:
+\url{https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/network/esp_now.html}
+
+\bibitem{invensense2013}
+InvenSense Inc., \textit{MPU-6000 and MPU-6050 Product Specification},
+Rev.~3.4, doc. PS-MPU-6000A-00, Sunnyvale, CA, 2013. [En línea]. Disp.:
+\url{https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf}
+
+\bibitem{nxp_i2c}
+NXP Semiconductors, \textit{I2C-bus specification and user manual},
+Rev.~7.0, UM10204, 2021. [En línea]. Disp.:
+\url{https://www.nxp.com/docs/en/user-guide/UM10204.pdf}
+
+\bibitem{kolban2017}
+N. Kolban, \textit{Kolban's Book on ESP32}, Leanpub, 2017. [En línea].
+Disp.: \url{https://leanpub.com/kolban-ESP32}
+
+\bibitem{repo_github}
+C. D. Cuellar Antury, ``Sistemas Embebidos — Actividades de la Vida
+Diaria,'' Repositorio GitHub, Univ. del Cauca, 2024. [En línea]. Disp.:
+\url{https://github.com/Cdcuellar/Sistemas-embebidos---Actividades-de-la-vida-diaria}
+
+\end{thebibliography}
+
+\end{document}
