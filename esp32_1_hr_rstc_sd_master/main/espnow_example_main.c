@@ -13,18 +13,18 @@
  * 
  * **Protocolo Inalámbrico:**
  * - ESP-NOW point-to-point de 2 nodos remotos: MPU (roll/pitch/accel/gyro) y TOUCH
- * - Payload: 32 bytes (datos_imu_t: 8 floats)
+ * - Payload: 40 bytes (datos_mpu_touch_t)
  * - Frecuencia de muestreo: configurable por nodo
  * 
  * **Optimizaciones Energéticas:**
  * - Dynamic Frequency Scaling: CPU 240 MHz → 80 MHz (activo) → 10 MHz (idle)
- * - WiFi Power Save: WIFI_PS_MIN_MODEM (~20 mA ahorro)
+ * - WiFi Power Save: WIFI_PS_NONE (mejor recepción/ACK para ESP-NOW)
  * - Light Sleep con fallback (si no soportado, solo DFS)
  * - TX power reducido a 10 dBm (40 unidades)
  * 
  * **Filtrado de Señal:**
  * - Pulso: Burst de 8 muestras → media recortada (sin min/max) → EMA(0.85) → baseline_ema(0.98) → remoción DC
- * - Nodos IMU: validación de tamaño (32 bytes), timeout >1000ms limpia datos stale
+ * - Nodos IMU: validación de tamaño (40 bytes) + versión=1, timeout >1000ms limpia datos stale
  * 
  * **Logging:**
  * - CSV local buffering: 60 filas en RAM → escritura cada minuto a /sdcard/datos.csv
@@ -73,26 +73,49 @@
 #define DS3231_ADDR 0x68         // Dirección I2C física del DS3231
 #define SD_MOUNT_POINT "/sdcard" // Nombre de la carpeta raíz en la SD
 #define RX_TIMEOUT_MS 1000        // Tiempo máximo sin paquetes por emisor
-#define LIVE_LOG_INTERVAL_S 10    // Mostrar log LIVE cada 10 segundos
+#define LIVE_LOG_INTERVAL_S 5     // Mostrar log LIVE cada 5 segundos
+#define RX_LOG_INTERVAL_MS 2000   // Mostrar detalle RX como máximo cada 2s por slave
+#define HR_LOG_INTERVAL_MS 2000   // Mostrar HR local dedicado cada 2s
 
 // --- DIRECCIONES MAC DE LOS NODOS REMOTOS ---
 static uint8_t mac_esclavo_mpu[ESP_NOW_ETH_ALEN] = {0x68, 0x25, 0xdd, 0x32, 0x70, 0xcc}; 
 static uint8_t mac_esclavo_touch[ESP_NOW_ETH_ALEN] = {0xb4, 0x3a, 0x45, 0x26, 0x0e, 0x40}; 
 
 // --- ESTRUCTURAS DE DATOS ---
-typedef struct {                // Estructura para datos del MPU6050
-    float roll;                  // Roll en grados
-    float pitch;                 // Pitch en grados
-    float acc_x, acc_y, acc_z;   // Aceleración en X/Y/Z
-    float gyr_x, gyr_y, gyr_z;   // Giroscopio en X/Y/Z
-} datos_imu_t;
+typedef struct __attribute__((packed)) {
+    float roll;
+    float pitch;
+    float acc_x;
+    float acc_y;
+    float acc_z;
+    float gyr_x;
+    float gyr_y;
+    float gyr_z;
+    uint16_t touch_raw;
+    uint16_t touch_filtrado;
+    uint8_t estado;
+    uint8_t version;
+    uint8_t reservado[2];
+} datos_mpu_touch_t;
+
+_Static_assert(sizeof(datos_mpu_touch_t) == 40, "Payload debe ser 40 bytes");
 
 typedef struct {                // Estructura completa de datos para logging
-    int pulso_raw;               // Valor ADC del sensor de pulso local - Lectura cruda del ADC
-    datos_imu_t mpu;             // Datos IMU del nodo MPU
-    datos_imu_t touch;           // Datos IMU del nodo touch/ESP32-S3
+    int pulso_raw;               // Señal HR local calibrada (amplitud AC)
+    datos_mpu_touch_t mpu;       // Datos del slave MPU
+    datos_mpu_touch_t touch;     // Datos del slave Touch/ESP32-S3
     struct tm tiempo;            // Estructura de tiempo (año, mes, día, etc.) - Tiempo del RTC
 } log_completo_t;
+
+static const char *estado_a_texto(uint8_t estado) {
+    switch (estado) {
+        case 0: return "PARADO";
+        case 1: return "ACOSTADO";
+        case 2: return "CAMINANDO";
+        case 3: return "CAIDA";
+        default: return "DESCONOCIDO";
+    }
+}
 
 // --- VARIABLES GLOBALES ---
 static const char *TAG = "MASTER_LOG";  // Etiqueta para depuración en consola - Para logs
@@ -106,6 +129,9 @@ static uint32_t paquetes_mpu = 0;       // Contador de paquetes válidos recibid
 static uint32_t paquetes_touch = 0;     // Contador de paquetes válidos recibidos del nodo Touch
 static int64_t ultimo_rx_mpu_ms = -1;   // Último tiempo de recepción válido del nodo MPU
 static int64_t ultimo_rx_touch_ms = -1; // Último tiempo de recepción válido del nodo Touch
+static int64_t ultimo_log_rx_mpu_ms = -1;   // Último log RX detallado del nodo MPU
+static int64_t ultimo_log_rx_touch_ms = -1; // Último log RX detallado del nodo Touch
+static int64_t ultimo_log_hr_ms = -1;       // Último log dedicado de HR local
 static bool mpu_desconectado = false;   // Estado de conectividad reportado del nodo MPU
 static bool touch_desconectado = false; // Estado de conectividad reportado del nodo Touch
 
@@ -304,19 +330,30 @@ void init_sd_card(void) {        // Función para inicializar la tarjeta SD
  */
 bool rtc_leer_tiempo(struct tm *info_tiempo) {
     uint8_t datos[7];             // Búfer para datos de tiempo - Array para 7 bytes de datos
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create(); // Crear comando I2C - Crea handle de comando
-    i2c_master_start(cmd);        // Iniciar comando - Comando de start
-    i2c_master_write_byte(cmd, (DS3231_ADDR << 1) | I2C_MASTER_WRITE, true); // Escribir dirección - Dirección de escritura
-    i2c_master_write_byte(cmd, 0x00, true); // Dirección de registro - Registro 0x00 (segundos)
-    i2c_master_start(cmd);        // Inicio repetido - Start repetido para lectura
-    i2c_master_write_byte(cmd, (DS3231_ADDR << 1) | I2C_MASTER_READ, true); // Dirección de lectura - Dirección de lectura
-    for (int i = 0; i < 6; i++) i2c_master_read_byte(cmd, &datos[i], I2C_MASTER_ACK); // Leer 6 bytes con ACK
-    i2c_master_read_byte(cmd, &datos[6], I2C_MASTER_NACK); // Último byte con NACK
-    i2c_master_stop(cmd);         // Detener comando - Comando de stop
-    esp_err_t ret = i2c_master_cmd_begin(I2C_PORT_NUM, cmd, 1000 / portTICK_PERIOD_MS); // Ejecutar comando - Envía el comando
-    i2c_cmd_link_delete(cmd);     // Eliminar comando - Libera el handle
+    esp_err_t ret = ESP_FAIL;
+
+    // Reintentos para tolerar timeout I2C esporádico (ruido/carga de CPU).
+    for (int intento = 0; intento < 3; intento++) {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create(); // Crear comando I2C - Crea handle de comando
+        i2c_master_start(cmd);        // Iniciar comando - Comando de start
+        i2c_master_write_byte(cmd, (DS3231_ADDR << 1) | I2C_MASTER_WRITE, true); // Escribir dirección - Dirección de escritura
+        i2c_master_write_byte(cmd, 0x00, true); // Dirección de registro - Registro 0x00 (segundos)
+        i2c_master_start(cmd);        // Inicio repetido - Start repetido para lectura
+        i2c_master_write_byte(cmd, (DS3231_ADDR << 1) | I2C_MASTER_READ, true); // Dirección de lectura - Dirección de lectura
+        for (int i = 0; i < 6; i++) i2c_master_read_byte(cmd, &datos[i], I2C_MASTER_ACK); // Leer 6 bytes con ACK
+        i2c_master_read_byte(cmd, &datos[6], I2C_MASTER_NACK); // Último byte con NACK
+        i2c_master_stop(cmd);         // Detener comando - Comando de stop
+        ret = i2c_master_cmd_begin(I2C_PORT_NUM, cmd, 1000 / portTICK_PERIOD_MS); // Ejecutar comando - Envía el comando
+        i2c_cmd_link_delete(cmd);     // Eliminar comando - Libera el handle
+
+        if (ret == ESP_OK) {
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+
     if (ret != ESP_OK) {
-        ESP_LOGW(TAG, "Lectura RTC falló: %s", esp_err_to_name(ret));
+        ESP_LOGW(TAG, "Lectura RTC falló tras reintentos: %s", esp_err_to_name(ret));
         return false;
     }
     // Enmascarar bits de control del DS3231 antes de convertir desde BCD
@@ -595,7 +632,8 @@ void task_settime_serial(void *p) { // Permite sincronizar RTC desde PC por moni
  * 
  * **Validación:**
  * - MAC: Compara contra lista conocida (MPU: 68:25:dd:32:70:cc, TOUCH: b4:3a:45:26:0e:40)
- * - Tamaño: Rechaza si no es exactamente 32 bytes (@c sizeof(datos_imu_t) = 8 floats)
+ * - Tamaño: Rechaza si no es exactamente 40 bytes (@c sizeof(datos_mpu_touch_t))
+ * - Versión: Rechaza si @c version != 1
  * - Si MAC desconocida o tamaño incorrecto: log de advertencia, datos no copiados
  * 
  * **Thread-safety:**
@@ -604,13 +642,13 @@ void task_settime_serial(void *p) { // Permite sincronizar RTC desde PC por moni
  * - Incrementa contador @ref paquetes_mpu o @ref paquetes_touch
  * 
  * @param info Información de emisor (MAC source, RSSI, channel)
- * @param data Payload (esperado: datos_imu_t = 32 bytes)
+ * @param data Payload (esperado: datos_mpu_touch_t = 40 bytes)
  * @param len Longitud actual del payload [bytes]
  * 
  * @return void
  * 
  * @warning Si @ref xMutex es NULL: función retorna sin procesar (deadlock prevention)
- * @warning El nodo MPU reporta tamaño incorrecto (12 vs 32); requiere corrección en firmware remoto
+ * @warning touch_raw/touch_filtrado en cero son válidos (p.ej. en slave MPU)
  * 
  * @author Carlos Daniel Cuellar Antury
  */
@@ -618,31 +656,71 @@ void cb_recepcion(const esp_now_recv_info_t *info, const uint8_t *data, int len)
     if (xMutex == NULL || info == NULL || data == NULL) {
         return;
     }
+    if (len != (int)sizeof(datos_mpu_touch_t)) {
+        ESP_LOGW(TAG, "ESP-NOW tamaño invalido MAC %02x:%02x:%02x:%02x:%02x:%02x len=%d esperado=%d",
+                 info->src_addr[0], info->src_addr[1], info->src_addr[2],
+                 info->src_addr[3], info->src_addr[4], info->src_addr[5],
+                 len, (int)sizeof(datos_mpu_touch_t));
+        return;
+    }
+
+    datos_mpu_touch_t rx;
+    memcpy(&rx, data, sizeof(rx));
+    if (rx.version != 1) {
+        ESP_LOGW(TAG, "ESP-NOW version invalida MAC %02x:%02x:%02x:%02x:%02x:%02x version=%u esperado=1",
+                 info->src_addr[0], info->src_addr[1], info->src_addr[2],
+                 info->src_addr[3], info->src_addr[4], info->src_addr[5],
+                 (unsigned)rx.version);
+        return;
+    }
+
     int64_t ahora_ms = (int64_t)esp_log_timestamp();
-    xSemaphoreTake(xMutex, portMAX_DELAY); // Bloquear acceso - Toma el mutex
-    // Identificar quién envió el paquete comparando la MAC
-    if (memcmp(info->src_addr, mac_esclavo_mpu, ESP_NOW_ETH_ALEN) == 0) {
-        if (len == (int)sizeof(datos_imu_t)) {
-            memcpy(&datos_sistema.mpu, data, sizeof(datos_imu_t)); // Copiar datos MPU completos
-            paquetes_mpu++;
-            ultimo_rx_mpu_ms = ahora_ms;
-        } else {
-            ESP_LOGW(TAG, "MPU: tamanio incorrecto %d (esperado %d)", len, (int)sizeof(datos_imu_t));
-        }
-    } else if (memcmp(info->src_addr, mac_esclavo_touch, ESP_NOW_ETH_ALEN) == 0) {
-        if (len == (int)sizeof(datos_imu_t)) {
-            memcpy(&datos_sistema.touch, data, sizeof(datos_imu_t)); // Copiar datos Touch completos
-            paquetes_touch++;
-            ultimo_rx_touch_ms = ahora_ms;
-        } else {
-            ESP_LOGW(TAG, "TOUCH: tamanio incorrecto %d (esperado %d)", len, (int)sizeof(datos_imu_t));
-        }
-    } else {
+    const bool es_mpu = (memcmp(info->src_addr, mac_esclavo_mpu, ESP_NOW_ETH_ALEN) == 0);
+    const bool es_touch = (memcmp(info->src_addr, mac_esclavo_touch, ESP_NOW_ETH_ALEN) == 0);
+    if (!es_mpu && !es_touch) {
         ESP_LOGW(TAG, "MAC desconocida: %02x:%02x:%02x:%02x:%02x:%02x len=%d",
                  info->src_addr[0], info->src_addr[1], info->src_addr[2],
                  info->src_addr[3], info->src_addr[4], info->src_addr[5], len);
+        return;
+    }
+
+    bool imprimir_rx = false;
+    if (es_mpu) {
+        if (ultimo_log_rx_mpu_ms < 0 || (ahora_ms - ultimo_log_rx_mpu_ms) >= RX_LOG_INTERVAL_MS) {
+            imprimir_rx = true;
+            ultimo_log_rx_mpu_ms = ahora_ms;
+        }
+    } else if (es_touch) {
+        if (ultimo_log_rx_touch_ms < 0 || (ahora_ms - ultimo_log_rx_touch_ms) >= RX_LOG_INTERVAL_MS) {
+            imprimir_rx = true;
+            ultimo_log_rx_touch_ms = ahora_ms;
+        }
+    }
+
+    xSemaphoreTake(xMutex, portMAX_DELAY); // Bloquear acceso - Toma el mutex
+    // Identificar quién envió el paquete comparando la MAC
+    if (es_mpu) {
+        datos_sistema.mpu = rx; // Guardar para uso de aplicación/alertas
+        paquetes_mpu++;
+        ultimo_rx_mpu_ms = ahora_ms;
+    } else if (es_touch) {
+        datos_sistema.touch = rx; // Guardar para uso de aplicación/alertas
+        paquetes_touch++;
+        ultimo_rx_touch_ms = ahora_ms;
     }
     xSemaphoreGive(xMutex); // Liberar acceso - Libera el mutex
+
+    if (imprimir_rx) {
+        ESP_LOGI(TAG,
+                 "RX %s %02x:%02x:%02x:%02x:%02x:%02x | roll=%.2f pitch=%.2f | ACC(%.2f,%.2f,%.2f) | GYR(%.2f,%.2f,%.2f) | estado=%u(%s)",
+                 es_mpu ? "MPU" : "TOUCH",
+                 info->src_addr[0], info->src_addr[1], info->src_addr[2],
+                 info->src_addr[3], info->src_addr[4], info->src_addr[5],
+                 rx.roll, rx.pitch,
+                 rx.acc_x, rx.acc_y, rx.acc_z,
+                 rx.gyr_x, rx.gyr_y, rx.gyr_z,
+                 (unsigned)rx.estado, estado_a_texto(rx.estado));
+    }
 }
 
 // --- TAREAS FREERTOS ---
@@ -727,11 +805,11 @@ void task_pulso(void *p) {       // Tarea para leer sensor de pulso
         }
 
         float pulso_ac = pulso_ema - baseline_ema; // Componente útil (AC)
-        int pulso_filtrado = (int)(fabsf(pulso_ac) * 6.0f + 0.5f); // Escala visible en monitor
+        int pulso_filtrado = (int)(fabsf(pulso_ac) * 2.0f + 0.5f); // Escala calibrada para HR local
         if (pulso_filtrado > 4095) {
             pulso_filtrado = 4095;
         }
-        if (abs(pulso_filtrado - pulso_prev) < 5) {
+        if (abs(pulso_filtrado - pulso_prev) < 3) {
             pulso_filtrado = pulso_prev; // Banda muerta pequeña para quitar parpadeo
         }
         pulso_prev = pulso_filtrado;
@@ -739,6 +817,13 @@ void task_pulso(void *p) {       // Tarea para leer sensor de pulso
         xSemaphoreTake(xMutex, portMAX_DELAY); // Tomar mutex - Protege datos
         datos_sistema.pulso_raw = pulso_filtrado; // Publicar señal estabilizada
         xSemaphoreGive(xMutex); // Dar mutex - Libera mutex
+
+        int64_t ahora_ms = (int64_t)esp_log_timestamp();
+        if (ultimo_log_hr_ms < 0 || (ahora_ms - ultimo_log_hr_ms) >= HR_LOG_INTERVAL_MS) {
+            ultimo_log_hr_ms = ahora_ms;
+            ESP_LOGI(TAG, "HR local=%d", pulso_filtrado);
+        }
+
         vTaskDelay(pdMS_TO_TICKS(500)); // Muestreo cada 500ms - Ahorro batería
     }
 }
@@ -790,7 +875,7 @@ void task_pulso(void *p) {       // Tarea para leer sensor de pulso
  * @author Carlos Daniel Cuellar Antury
  */
 void task_sd_log(void *p) {      // Tarea para guardar en SD - lote cada 60s para ahorrar batería
-    enum { LOTE_MAX = 60, MAX_CSV = 192 };
+    enum { LOTE_MAX = 60, MAX_CSV = 256 };
     static char lote[LOTE_MAX][MAX_CSV]; // Búfer estático ~11KB; fuera del stack
     int n = 0;
     int live_cnt = 0;
@@ -836,14 +921,16 @@ void task_sd_log(void *p) {      // Tarea para guardar en SD - lote cada 60s par
         // Formatear línea CSV en búfer RAM (no toca la SD todavía)
         if (sd_montada && n < LOTE_MAX) {
             snprintf(lote[n], MAX_CSV,
-                     "%02d/%02d/%d,%02d:%02d:%02d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+                     "%02d/%02d/%d,%02d:%02d:%02d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%u\n",
                      snap.tiempo.tm_mday, snap.tiempo.tm_mon + 1, snap.tiempo.tm_year + 1900,
                      snap.tiempo.tm_hour, snap.tiempo.tm_min, snap.tiempo.tm_sec,
                      snap.pulso_raw,
                      snap.mpu.roll, snap.mpu.pitch, snap.mpu.acc_x, snap.mpu.acc_y, snap.mpu.acc_z,
                      snap.mpu.gyr_x, snap.mpu.gyr_y, snap.mpu.gyr_z,
+                     (unsigned)snap.mpu.estado,
                      snap.touch.roll, snap.touch.pitch, snap.touch.acc_x, snap.touch.acc_y, snap.touch.acc_z,
-                     snap.touch.gyr_x, snap.touch.gyr_y, snap.touch.gyr_z);
+                     snap.touch.gyr_x, snap.touch.gyr_y, snap.touch.gyr_z,
+                     (unsigned)snap.touch.estado);
             n++;
         }
 
@@ -877,26 +964,32 @@ void task_sd_log(void *p) {      // Tarea para guardar en SD - lote cada 60s par
                 calcular_roll_pitch(snap.touch.acc_x, snap.touch.acc_y, snap.touch.acc_z, &roll_touch, &pitch_touch);
             }
             ESP_LOGI(TAG,
-                     "LIVE | Pulso:%d | RX MPU:%lu TOUCH:%lu | MPU Roll:%.2f Pitch:%.2f ACC(%.2f,%.2f,%.2f) GYR(%.2f,%.2f,%.2f) | TOUCH Roll:%.2f Pitch:%.2f ACC(%.2f,%.2f,%.2f) GYR(%.2f,%.2f,%.2f)",
+                     "LIVE | HR local:%d | RX MPU:%lu TOUCH:%lu | MPU Roll:%.2f Pitch:%.2f ACC(%.2f,%.2f,%.2f) GYR(%.2f,%.2f,%.2f) EST:%u(%s) | TOUCH Roll:%.2f Pitch:%.2f ACC(%.2f,%.2f,%.2f) GYR(%.2f,%.2f,%.2f) EST:%u(%s)",
                      snap.pulso_raw,
                      (unsigned long)cnt_mpu, (unsigned long)cnt_touch,
                      roll_mpu, pitch_mpu, snap.mpu.acc_x, snap.mpu.acc_y, snap.mpu.acc_z, snap.mpu.gyr_x, snap.mpu.gyr_y, snap.mpu.gyr_z,
-                     roll_touch, pitch_touch, snap.touch.acc_x, snap.touch.acc_y, snap.touch.acc_z, snap.touch.gyr_x, snap.touch.gyr_y, snap.touch.gyr_z);
+                     (unsigned)snap.mpu.estado, estado_a_texto(snap.mpu.estado),
+                     roll_touch, pitch_touch, snap.touch.acc_x, snap.touch.acc_y, snap.touch.acc_z, snap.touch.gyr_x, snap.touch.gyr_y, snap.touch.gyr_z,
+                     (unsigned)snap.touch.estado, estado_a_texto(snap.touch.estado));
         }
     }
 }
 
 void task_rtc(void *p) {         // Tarea para leer RTC
     while(1) { // Bucle infinito
-        xSemaphoreTake(xMutex, portMAX_DELAY); // Tomar mutex - Protege datos
-        rtc_leer_tiempo(&datos_sistema.tiempo); // Leer tiempo - Actualiza tiempo si la lectura es válida
-        xSemaphoreGive(xMutex); // Dar mutex - Libera mutex
+        struct tm tiempo_leido = {0};
+        if (rtc_leer_tiempo(&tiempo_leido)) {
+            xSemaphoreTake(xMutex, portMAX_DELAY); // Tomar mutex solo al copiar dato compartido
+            datos_sistema.tiempo = tiempo_leido;
+            xSemaphoreGive(xMutex); // Dar mutex - Libera mutex
+        }
         vTaskDelay(pdMS_TO_TICKS(5000)); // Refrescar cada 5s - Ahorro batería
     }
 }
 
 void app_main(void) {            // Función principal
     ESP_LOGI(TAG, "Iniciando aplicación maestro ESP-NOW"); // Log de inicio
+    esp_log_level_set(TAG, ESP_LOG_INFO); // Garantiza que se muestren logs RX en monitor
     xMutex = xSemaphoreCreateMutex(); // Crear mutex temprano para callbacks/tareas
     if (xMutex == NULL) {
         ESP_LOGE(TAG, "No se pudo crear mutex global");
@@ -913,7 +1006,7 @@ void app_main(void) {            // Función principal
     ESP_ERROR_CHECK(esp_wifi_start()); // Iniciar WiFi - Start WiFi
     ESP_ERROR_CHECK(esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE)); // Establecer canal - Canal 1
     ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(40)); // Reducir TX a 10 dBm (default 20 dBm) - ahorra ~5 mA
-    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MIN_MODEM)); // Power save del modem WiFi
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // Sin power save para mejorar recepción/ACK de ESP-NOW
     // Iniciar ESP-NOW
     ESP_ERROR_CHECK(esp_now_init()); // Inicializar ESP-NOW - Init ESP-NOW
     ESP_ERROR_CHECK(esp_now_register_recv_cb(cb_recepcion)); // Registrar callback - Register receive callback

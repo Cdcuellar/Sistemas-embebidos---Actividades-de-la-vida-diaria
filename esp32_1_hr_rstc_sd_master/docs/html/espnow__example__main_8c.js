@@ -1,6 +1,5 @@
 var espnow__example__main_8c =
 [
-    [ "datos_imu_t", "structdatos__imu__t.html", null ],
     [ "log_completo_t", "structlog__completo__t.html", null ],
     [ "calcular_roll_pitch", "espnow__example__main_8c.html#ac33e6dbc813eef351388cbf55cfd740f", null ],
     [ "cb_recepcion", "espnow__example__main_8c.html#a138dd53ebcc391ed8b8b0c7ae562d3fe", null ],
