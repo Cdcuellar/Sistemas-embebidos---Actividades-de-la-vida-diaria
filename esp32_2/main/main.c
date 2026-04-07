@@ -4,7 +4,7 @@
  * @details Firmware del nodo esclavo que adquiere datos del sensor MPU6050
  *          (acelerómetro + giroscopio de 6 ejes) mediante I2C, calcula ángulos
  *          de inclinación (roll / pitch), clasifica estado de actividad
- *          (PARADO, ACOSTADO, CAMINANDO, CAIDA) y envía un paquete de 32 bytes
+ *          (PARADO, ACOSTADO, CAMINANDO, CAIDA) y envía un paquete de 40 bytes
  *          cada 500 ms al nodo maestro usando el protocolo ESP-NOW sobre
  *          WiFi canal 1.
  *          Utiliza dos tareas FreeRTOS protegidas por mutex y gestión de energía
@@ -15,7 +15,7 @@
  *          - MPU6050 conectado a SDA=GPIO21, SCL=GPIO22, AD0=GND
  *
  *          Protocolo:
- *          - ESP-NOW, canal 1, payload 32 bytes (8 floats), sin cifrado
+ *          - ESP-NOW, canal 1, payload 40 bytes (IMU + estado + version), sin cifrado
  *
  * @author Carlos Daniel Cuellar Antury
  */
@@ -82,6 +82,8 @@ static const char *TAG = "NODO2_MPU6050";
 #define UMBRAL_ANGULO_PARADO       35.0f  /* Ángulo con referencia de pie para PARADO    */
 #define UMBRAL_ANGULO_ACOSTADO     60.0f  /* Ángulo con referencia de pie para ACOSTADO  */
 #define UMBRAL_GIRO_EXTREMO_CAIDA  180.0f /* Giro brusco compatible con caída            */
+#define UMBRAL_EJE_POSTURA_G       0.75f   /* Magnitud mínima de eje dominante en reposo  */
+#define INVERTIR_PARADO_ACOSTADO   0       /* 1: intercambia etiquetas para este montaje  */
 
 #define MUESTRAS_REF_POSTURA       18U    /* Muestras quietas para fijar referencia      */
 #define MUESTRAS_CAMINANDO         3U     /* Confirmación temporal de CAMINANDO          */
@@ -96,6 +98,8 @@ typedef enum {
     ESTADO_CAMINANDO,
     ESTADO_CAIDA
 } estado_actividad_t;
+
+#define VERSION_PAYLOAD          1U       /* Version de estructura ESP-NOW (master/slave) */
 
 /* ============================================================
    CONFIGURACION DE RED ESP-NOW
@@ -112,12 +116,12 @@ static const uint8_t MAC_MAESTRO[ESP_NOW_ETH_ALEN] = {0xC8, 0x2E, 0x18, 0x67, 0x
 
 /**
  * @brief Paquete de telemetría enviado por ESP-NOW al maestro.
- * @details Estructura de 32 bytes exactos (8 floats × 4 bytes) que define
+ * @details Estructura de 40 bytes exactos que define
  *          el contrato de formato entre el nodo esclavo y el nodo maestro.
  *          El orden de los campos es significativo y no debe modificarse sin
  *          actualizar también el struct correspondiente en el maestro.
  */
-typedef struct {
+typedef struct __attribute__((packed)) {
     float roll;    /**< Ángulo de inclinación lateral (rotación sobre eje X) en grados */
     float pitch;   /**< Ángulo de cabeceo adelante/atrás (rotación sobre eje Y) en grados */
     float acc_x;   /**< Aceleración en eje X en unidades g (rango ±2g) */
@@ -126,10 +130,15 @@ typedef struct {
     float gyr_x;   /**< Velocidad angular en eje X en grados/segundo (rango ±250 °/s) */
     float gyr_y;   /**< Velocidad angular en eje Y en grados/segundo (rango ±250 °/s) */
     float gyr_z;   /**< Velocidad angular en eje Z en grados/segundo (rango ±250 °/s) */
+    uint16_t touch_raw;       /**< Touch crudo (este nodo envia 0 si no aplica). */
+    uint16_t touch_filtrado;  /**< Touch filtrado (este nodo envia 0 si no aplica). */
+    uint8_t estado;           /**< 0=PARADO, 1=ACOSTADO, 2=CAMINANDO, 3=CAIDA. */
+    uint8_t version;          /**< Version de payload para validacion en master. */
+    uint8_t reservado[2];     /**< Reservado para alineacion/compatibilidad futura. */
 } datos_mpu_t;
 
-/* Verificación en tiempo de compilación: debe ser exactamente 32 bytes */
-_Static_assert(sizeof(datos_mpu_t) == 32, "datos_mpu_t debe ser exactamente 32 bytes");
+/* Verificación en tiempo de compilación: debe ser exactamente 40 bytes */
+_Static_assert(sizeof(datos_mpu_t) == 40, "datos_mpu_t debe ser exactamente 40 bytes");
 
 /* ============================================================
    VARIABLES GLOBALES
@@ -182,12 +191,29 @@ static const char *texto_estado_actividad(estado_actividad_t estado)
 }
 
 /**
+ * @brief Ajusta etiquetas de postura según montaje físico del sensor.
+ */
+static estado_actividad_t mapear_postura_montaje(estado_actividad_t estado)
+{
+#if INVERTIR_PARADO_ACOSTADO
+    if (estado == ESTADO_PARADO) {
+        return ESTADO_ACOSTADO;
+    }
+    if (estado == ESTADO_ACOSTADO) {
+        return ESTADO_PARADO;
+    }
+#endif
+    return estado;
+}
+
+/**
  * @brief Clasificador heurístico para postura, caminata y caída.
  * @details Asume que el sensor está fijo al cuerpo (pecho/cintura) y combina:
  *          1) referencia de postura inicial en reposo (pie),
  *          2) aceleración dinámica + actividad angular para caminata,
- *          3) detección secuencial de caída (impacto/giro brusco + reposo),
- *          4) histéresis temporal para estabilidad de estado.
+ *          3) regla de eje dominante en reposo (X->PARADO, Y->ACOSTADO),
+ *          4) detección secuencial de caída (impacto/giro brusco + reposo),
+ *          5) histéresis temporal para estabilidad de estado.
  *          Los umbrales están pensados para iniciar pruebas y pueden
  *          ajustarse con datos reales del usuario.
  */
@@ -303,13 +329,29 @@ static estado_actividad_t clasificar_actividad_mpu(float ax_g, float ay_g, float
     }
 
     if (contador_reposo >= MUESTRAS_REPOSO && gyro_mag < UMBRAL_GYRO_QUIETO) {
+        /* Regla directa para este montaje: X dominante=PARADO, Y dominante=ACOSTADO. */
+        const float abs_ax = fabsf(ax_g);
+        const float abs_ay = fabsf(ay_g);
+        const float abs_az = fabsf(az_g);
+
+        if (abs_ax >= abs_ay && abs_ax >= abs_az && abs_ax >= UMBRAL_EJE_POSTURA_G) {
+            ultimo_estado_no_caida = mapear_postura_montaje(ESTADO_PARADO);
+            return ultimo_estado_no_caida;
+        }
+
+        if (abs_ay >= abs_ax && abs_ay >= abs_az && abs_ay >= UMBRAL_EJE_POSTURA_G) {
+            ultimo_estado_no_caida = mapear_postura_montaje(ESTADO_ACOSTADO);
+            return ultimo_estado_no_caida;
+        }
+
+        /* Respaldo por ángulo con referencia para posturas intermedias. */
         if (angulo_ref_deg >= UMBRAL_ANGULO_ACOSTADO) {
-            ultimo_estado_no_caida = ESTADO_ACOSTADO;
-            return ESTADO_ACOSTADO;
+            ultimo_estado_no_caida = mapear_postura_montaje(ESTADO_ACOSTADO);
+            return ultimo_estado_no_caida;
         }
         if (angulo_ref_deg <= UMBRAL_ANGULO_PARADO) {
-            ultimo_estado_no_caida = ESTADO_PARADO;
-            return ESTADO_PARADO;
+            ultimo_estado_no_caida = mapear_postura_montaje(ESTADO_PARADO);
+            return ultimo_estado_no_caida;
         }
 
         /* Zona intermedia: usa continuidad para evitar estados ambiguos. */
@@ -388,6 +430,7 @@ static esp_err_t iniciar_wifi_para_espnow(void)
     ));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));   /* Modo: estación (no access point) */
     ESP_ERROR_CHECK(esp_wifi_start());                   /* Enciende el hardware WiFi         */
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));      /* Evita modem sleep y mejora ACK ESP-NOW */
     ESP_ERROR_CHECK(esp_wifi_set_channel(                /* Fija el canal al mismo que usa    */
         CANAL_WIFI_ESPNOW, WIFI_SECOND_CHAN_NONE         /* el maestro (canal 1, ancho 20MHz) */
     ));
@@ -531,6 +574,12 @@ static void tarea_muestreo_mpu(void *param)
                 datos_compartidos.gyr_x = gx_dps;    /* Velocidad angular X */
                 datos_compartidos.gyr_y = gy_dps;    /* Velocidad angular Y */
                 datos_compartidos.gyr_z = gz_dps;    /* Velocidad angular Z */
+                datos_compartidos.touch_raw = 0;     /* Nodo MPU: sin touch */
+                datos_compartidos.touch_filtrado = 0;/* Nodo MPU: sin touch */
+                datos_compartidos.estado = (uint8_t)estado_actual;
+                datos_compartidos.version = VERSION_PAYLOAD;
+                datos_compartidos.reservado[0] = 0;
+                datos_compartidos.reservado[1] = 0;
                 xSemaphoreGive(mutex_datos);         /* Libera el mutex para que otros accedan */
             }
 

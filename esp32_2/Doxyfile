@@ -7,8 +7,8 @@
 # =============================================================
 
 PROJECT_NAME           = "Nodo Esclavo MPU6050 - Clasificador de Actividad"
-PROJECT_BRIEF          = "Firmware ESP32: IMU + clasificacion (PARADO/ACOSTADO/CAMINANDO/CAIDA) + ESP-NOW"
-PROJECT_NUMBER         = "1.0"
+PROJECT_BRIEF          = "Firmware ESP32: IMU + clasificacion + ESP-NOW (payload 40 bytes, versionado)"
+PROJECT_NUMBER         = "1.1"
 OUTPUT_DIRECTORY       = docs
 
 INPUT                  = main CMakeLists.txt
