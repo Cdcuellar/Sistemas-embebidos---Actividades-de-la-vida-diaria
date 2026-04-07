@@ -3,8 +3,10 @@
  * @brief Nodo esclavo #2 – sensor inercial MPU6050 con transmisión ESP-NOW.
  * @details Firmware del nodo esclavo que adquiere datos del sensor MPU6050
  *          (acelerómetro + giroscopio de 6 ejes) mediante I2C, calcula ángulos
- *          de inclinación (roll / pitch) y envía un paquete de 32 bytes cada
- *          500 ms al nodo maestro usando el protocolo ESP-NOW sobre WiFi canal 1.
+ *          de inclinación (roll / pitch), clasifica estado de actividad
+ *          (PARADO, ACOSTADO, CAMINANDO, CAIDA) y envía un paquete de 32 bytes
+ *          cada 500 ms al nodo maestro usando el protocolo ESP-NOW sobre
+ *          WiFi canal 1.
  *          Utiliza dos tareas FreeRTOS protegidas por mutex y gestión de energía
  *          (Light Sleep + CPU 80 MHz) para minimizar consumo.
  *
@@ -25,6 +27,7 @@
 #include <stdio.h>           /* Entrada/salida estándar (printf, etc.)        */
 #include <math.h>            /* Funciones matemáticas (atan2, sqrt, etc.)     */
 #include <string.h>          /* Manipulación de memoria (memcpy, memset, etc.)*/
+#include <stdbool.h>         /* Tipo bool y valores true/false                */
 #include "freertos/FreeRTOS.h"  /* Núcleo de FreeRTOS: tipos y macros básicos */
 #include "freertos/task.h"      /* Creación y control de tareas (xTaskCreate) */
 #include "freertos/semphr.h"    /* Semáforos y mutexes (xSemaphoreCreateMutex)*/
@@ -69,6 +72,30 @@ static const char *TAG = "NODO2_MPU6050";
 #define PERIODO_ENVIO_MS         500      /* Cada cuántos ms envía por ESP-NOW (500 ms)*/
 #define REINTENTOS_DETECCION     3        /* Intentos para detectar el sensor al inicio*/
 #define LOG_CADA_MUESTRAS        5        /* Imprime en consola cada 5 muestras leídas */
+
+/* Umbrales para clasificar postura/actividad (ajustables en campo) */
+#define UMBRAL_G_IMPACTO_ALTO      1.55f  /* Pico de aceleración para impacto de caída   */
+#define UMBRAL_G_IMPACTO_BAJO      0.55f  /* Casi ingravidez en caída libre breve        */
+#define UMBRAL_MOV_DINAMICO        0.08f  /* Componente dinámica de |acc| para marcha    */
+#define UMBRAL_GYRO_CAMINANDO      22.0f  /* Actividad angular mínima para caminar       */
+#define UMBRAL_GYRO_QUIETO         10.0f  /* Actividad angular de reposo                 */
+#define UMBRAL_ANGULO_PARADO       35.0f  /* Ángulo con referencia de pie para PARADO    */
+#define UMBRAL_ANGULO_ACOSTADO     60.0f  /* Ángulo con referencia de pie para ACOSTADO  */
+#define UMBRAL_GIRO_EXTREMO_CAIDA  180.0f /* Giro brusco compatible con caída            */
+
+#define MUESTRAS_REF_POSTURA       18U    /* Muestras quietas para fijar referencia      */
+#define MUESTRAS_CAMINANDO         3U     /* Confirmación temporal de CAMINANDO          */
+#define MUESTRAS_REPOSO            4U     /* Confirmación temporal de postura quieta      */
+
+#define VENTANA_CAIDA_MS         1500U    /* Tiempo para confirmar caída tras impacto    */
+#define RETENCION_CAIDA_MS       4000U    /* Tiempo de retención del estado de caída     */
+
+typedef enum {
+    ESTADO_PARADO = 0,
+    ESTADO_ACOSTADO,
+    ESTADO_CAMINANDO,
+    ESTADO_CAIDA
+} estado_actividad_t;
 
 /* ============================================================
    CONFIGURACION DE RED ESP-NOW
@@ -116,6 +143,182 @@ static SemaphoreHandle_t mutex_datos = NULL;
 
 /** @brief Instancia del driver MPU6050; almacena el handle I2C y los offsets de calibración. */
 static mpu6050_t sensor_mpu;
+
+/* ============================================================
+   CLASIFICACION DE ACTIVIDAD (POSTURA / MARCHA / CAIDA)
+   ============================================================ */
+
+/**
+ * @brief Limita un valor float entre dos extremos.
+ */
+static float limitar_float(float valor, float minimo, float maximo)
+{
+    if (valor < minimo) {
+        return minimo;
+    }
+    if (valor > maximo) {
+        return maximo;
+    }
+    return valor;
+}
+
+/**
+ * @brief Convierte el enum de estado a texto legible para logs.
+ */
+static const char *texto_estado_actividad(estado_actividad_t estado)
+{
+    switch (estado) {
+        case ESTADO_PARADO:
+            return "PARADO";
+        case ESTADO_ACOSTADO:
+            return "ACOSTADO";
+        case ESTADO_CAMINANDO:
+            return "CAMINANDO";
+        case ESTADO_CAIDA:
+            return "CAIDA";
+        default:
+            return "PARADO";
+    }
+}
+
+/**
+ * @brief Clasificador heurístico para postura, caminata y caída.
+ * @details Asume que el sensor está fijo al cuerpo (pecho/cintura) y combina:
+ *          1) referencia de postura inicial en reposo (pie),
+ *          2) aceleración dinámica + actividad angular para caminata,
+ *          3) detección secuencial de caída (impacto/giro brusco + reposo),
+ *          4) histéresis temporal para estabilidad de estado.
+ *          Los umbrales están pensados para iniciar pruebas y pueden
+ *          ajustarse con datos reales del usuario.
+ */
+static estado_actividad_t clasificar_actividad_mpu(float ax_g, float ay_g, float az_g,
+                                                   float gx_dps, float gy_dps, float gz_dps)
+{
+    static bool impacto_detectado = false;
+    static TickType_t tick_impacto = 0;
+    static TickType_t tick_ultima_caida = 0;
+
+    static bool referencia_lista = false;
+    static uint32_t muestras_ref = 0;
+    static float ref_x = 1.0f;
+    static float ref_y = 0.0f;
+    static float ref_z = 0.0f;
+    static float suma_ref_x = 0.0f;
+    static float suma_ref_y = 0.0f;
+    static float suma_ref_z = 0.0f;
+
+    static uint32_t contador_marcha = 0;
+    static uint32_t contador_reposo = 0;
+
+    static estado_actividad_t ultimo_estado_no_caida = ESTADO_PARADO;
+    static float acc_mag_lp = 1.0f;
+
+    const TickType_t ahora = xTaskGetTickCount();
+
+    const float acc_mag = sqrtf((ax_g * ax_g) + (ay_g * ay_g) + (az_g * az_g));
+    const float gyro_mag = sqrtf((gx_dps * gx_dps) + (gy_dps * gy_dps) + (gz_dps * gz_dps));
+    acc_mag_lp = (0.92f * acc_mag_lp) + (0.08f * acc_mag);
+    const float acc_dinamica = fabsf(acc_mag - acc_mag_lp);
+
+    const float inv_mag = 1.0f / fmaxf(acc_mag, 0.01f);
+    const float ux = ax_g * inv_mag;
+    const float uy = ay_g * inv_mag;
+    const float uz = az_g * inv_mag;
+
+    /* Auto-referencia: se fija en reposo al inicio y representa la postura de pie. */
+    if (!referencia_lista) {
+        if (gyro_mag < UMBRAL_GYRO_QUIETO && acc_dinamica < 0.12f) {
+            suma_ref_x += ux;
+            suma_ref_y += uy;
+            suma_ref_z += uz;
+            muestras_ref++;
+
+            if (muestras_ref >= MUESTRAS_REF_POSTURA) {
+                const float nx = suma_ref_x / (float)muestras_ref;
+                const float ny = suma_ref_y / (float)muestras_ref;
+                const float nz = suma_ref_z / (float)muestras_ref;
+                const float norma = sqrtf((nx * nx) + (ny * ny) + (nz * nz));
+                if (norma > 0.05f) {
+                    ref_x = nx / norma;
+                    ref_y = ny / norma;
+                    ref_z = nz / norma;
+                    referencia_lista = true;
+                    ESP_LOGI(TAG, "Referencia de postura lista (pie): [%.2f %.2f %.2f]", ref_x, ref_y, ref_z);
+                }
+            }
+        }
+
+        return ultimo_estado_no_caida;
+    }
+
+    const float dot = limitar_float((ux * ref_x) + (uy * ref_y) + (uz * ref_z), -1.0f, 1.0f);
+    const float angulo_ref_deg = acosf(fabsf(dot)) * (180.0f / (float)M_PI);
+
+    if (acc_mag >= UMBRAL_G_IMPACTO_ALTO ||
+        acc_mag <= UMBRAL_G_IMPACTO_BAJO ||
+        gyro_mag >= UMBRAL_GIRO_EXTREMO_CAIDA) {
+        impacto_detectado = true;
+        tick_impacto = ahora;
+    }
+
+    if (impacto_detectado) {
+        const uint32_t ms_desde_impacto = (uint32_t)pdTICKS_TO_MS(ahora - tick_impacto);
+
+        if (ms_desde_impacto <= VENTANA_CAIDA_MS) {
+            const bool quieto_postimpacto = (acc_mag > 0.75f && acc_mag < 1.25f && gyro_mag < 14.0f);
+            const bool postura_colapso = (angulo_ref_deg > UMBRAL_ANGULO_ACOSTADO);
+            if (quieto_postimpacto && postura_colapso) {
+                tick_ultima_caida = ahora;
+                impacto_detectado = false;
+                return ESTADO_CAIDA;
+            }
+        } else {
+            impacto_detectado = false;
+        }
+    }
+
+    if ((uint32_t)pdTICKS_TO_MS(ahora - tick_ultima_caida) <= RETENCION_CAIDA_MS) {
+        return ESTADO_CAIDA;
+    }
+
+    /* Marcha: requiere persistencia temporal para no marcar oscilaciones cortas. */
+    /* Marcha real: requiere dinámica + giro, no solo sesgo de aceleración estática. */
+    if (acc_dinamica > UMBRAL_MOV_DINAMICO && gyro_mag > UMBRAL_GYRO_CAMINANDO) {
+        if (contador_marcha < (MUESTRAS_CAMINANDO + 2U)) {
+            contador_marcha++;
+        }
+        contador_reposo = 0;
+    } else {
+        if (contador_marcha > 0U) {
+            contador_marcha--;
+        }
+        if (contador_reposo < (MUESTRAS_REPOSO + 2U)) {
+            contador_reposo++;
+        }
+    }
+
+    if (contador_marcha >= MUESTRAS_CAMINANDO) {
+        ultimo_estado_no_caida = ESTADO_CAMINANDO;
+        return ESTADO_CAMINANDO;
+    }
+
+    if (contador_reposo >= MUESTRAS_REPOSO && gyro_mag < UMBRAL_GYRO_QUIETO) {
+        if (angulo_ref_deg >= UMBRAL_ANGULO_ACOSTADO) {
+            ultimo_estado_no_caida = ESTADO_ACOSTADO;
+            return ESTADO_ACOSTADO;
+        }
+        if (angulo_ref_deg <= UMBRAL_ANGULO_PARADO) {
+            ultimo_estado_no_caida = ESTADO_PARADO;
+            return ESTADO_PARADO;
+        }
+
+        /* Zona intermedia: usa continuidad para evitar estados ambiguos. */
+        return ultimo_estado_no_caida;
+    }
+
+    /* Si está en transición, conserva el último estado válido no-caída. */
+    return ultimo_estado_no_caida;
+}
 
 /* ============================================================
    CALLBACK DE CONFIRMACION ESP-NOW
@@ -315,6 +518,9 @@ static void tarea_muestreo_mpu(void *param)
             float gy_dps = gy / 131.0f;   /* Velocidad angular Y en grados/segundo */
             float gz_dps = gz / 131.0f;   /* Velocidad angular Z en grados/segundo */
 
+            estado_actividad_t estado_actual = clasificar_actividad_mpu(ax_g, ay_g, az_g,
+                                                                         gx_dps, gy_dps, gz_dps);
+
             /* Toma el mutex: bloquea hasta 20 ms para no chocar con la tarea de envío */
             if (xSemaphoreTake(mutex_datos, pdMS_TO_TICKS(20)) == pdTRUE) {
                 datos_compartidos.roll  = roll;      /* Ángulo Roll  */
@@ -334,8 +540,9 @@ static void tarea_muestreo_mpu(void *param)
 
             contador_logs++;
             if ((contador_logs % LOG_CADA_MUESTRAS) == 0) {
-                ESP_LOGI(TAG, "Acc:%.3f,%.3f,%.3f g | Gyr:%.2f,%.2f,%.2f dps | Roll:%.1f Pitch:%.1f",
-                         ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps, roll, pitch);
+                ESP_LOGI(TAG, "Acc:%.3f,%.3f,%.3f g | Gyr:%.2f,%.2f,%.2f dps | Roll:%.1f Pitch:%.1f | Estado:%s",
+                         ax_g, ay_g, az_g, gx_dps, gy_dps, gz_dps, roll, pitch,
+                         texto_estado_actividad(estado_actual));
             }
         } else {
             /* Error de comunicación I2C; puede ser ruido o sensor desconectado */

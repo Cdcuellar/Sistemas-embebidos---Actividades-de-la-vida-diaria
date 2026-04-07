@@ -6,8 +6,8 @@
 # Salida:      docs/html/index.html
 # =============================================================
 
-PROJECT_NAME           = "Nodo Esclavo MPU6050"
-PROJECT_BRIEF          = "Firmware ESP32: adquisición IMU + transmisión ESP-NOW"
+PROJECT_NAME           = "Nodo Esclavo MPU6050 - Clasificador de Actividad"
+PROJECT_BRIEF          = "Firmware ESP32: IMU + clasificacion (PARADO/ACOSTADO/CAMINANDO/CAIDA) + ESP-NOW"
 PROJECT_NUMBER         = "1.0"
 OUTPUT_DIRECTORY       = docs
 
@@ -24,7 +24,6 @@ GENERATE_LATEX         = NO
 HAVE_DOT               = NO
 
 HTML_OUTPUT            = html
-HTML_TIMESTAMP         = YES
 
 QUIET                  = NO
 WARNINGS               = YES
