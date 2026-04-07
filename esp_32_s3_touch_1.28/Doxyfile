@@ -1,15 +1,15 @@
 # Doxygen configuration for ESP32-S3 Touch IMU transmitter project
 
 PROJECT_NAME           = "Monitor Touch - Nodo Slave"
-PROJECT_BRIEF          = "Nodo slave IMU por ESP-NOW con interfaz en GC9A01"
-PROJECT_NUMBER         = "1.0"
+PROJECT_BRIEF          = "Nodo slave IMU/Touch por ESP-NOW con clasificacion de actividad (PARADO/ACOSTADO/CAMINANDO/CAIDA) y payload 40B"
+PROJECT_NUMBER         = "1.1"
 OUTPUT_DIRECTORY       = docs
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = Spanish
 
 # Input scope
-INPUT                  = main CMakeLists.txt
-FILE_PATTERNS          = *.c *.cpp *.h *.hpp *.md
+INPUT                  = main CMakeLists.txt prueba_clasificacion_log.txt
+FILE_PATTERNS          = *.c *.cpp *.h *.hpp *.md *.txt
 RECURSIVE              = YES
 EXCLUDE                = build .vscode .git
 EXCLUDE_PATTERNS       = */build/*
