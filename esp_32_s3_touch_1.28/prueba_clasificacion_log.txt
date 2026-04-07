@@ -1,0 +1,203 @@
+I (1173) wifi:Set ps type: 0, coexist: 0
+
+I (1173) ESPNOW: espnow [version: 2.0] init
+I (1173) main_task: Returned from app_main()
+I (1373) MAIN: Acc=[+0.147,+0.219,-0.927] Gyr=[+8.2,+8.1,-0.2] TouchRaw=0 TouchFiltrado=0 Roll=+18.0 Pitch=+1.0 Estado=CAIDA
+I (1623) MAIN: Acc=[+0.150,+0.214,-0.920] Gyr=[+7.5,+9.2,-0.7] TouchRaw=0 TouchFiltrado=0 Roll=+34.3 Pitch=+2.1 Estado=CAIDA
+I (1873) MAIN: Acc=[+0.148,+0.216,-0.925] Gyr=[+9.0,+8.4,-0.9] TouchRaw=0 TouchFiltrado=0 Roll=+49.0 Pitch=+2.9 Estado=CAIDA
+I (2123) MAIN: Acc=[+0.148,+0.216,-0.920] Gyr=[+7.5,+7.1,-0.1] TouchRaw=0 TouchFiltrado=0 Roll=+62.2 Pitch=+3.7 Estado=CAIDA
+I (2123) ESPNOW: Envio ESP-NOW exitoso (total=20)
+I (2373) MAIN: Acc=[+0.147,+0.219,-0.923] Gyr=[+7.7,+6.6,-1.4] TouchRaw=0 TouchFiltrado=0 Roll=+74.2 Pitch=+4.1 Estado=CAIDA
+I (2623) MAIN: Acc=[+0.144,+0.216,-0.925] Gyr=[+8.6,+8.2,-0.1] TouchRaw=0 TouchFiltrado=0 Roll=+85.1 Pitch=+4.6 Estado=CAIDA
+I (2873) MAIN: Acc=[+0.147,+0.220,-0.925] Gyr=[+7.4,+8.6,-1.9] TouchRaw=0 TouchFiltrado=0 Roll=+94.8 Pitch=+5.3 Estado=CAIDA
+I (3123) MAIN: Acc=[+0.151,+0.216,-0.924] Gyr=[+8.8,+7.9,+0.2] TouchRaw=0 TouchFiltrado=0 Roll=+103.7 Pitch=+6.1 Estado=CAIDA
+I (3123) ESPNOW: Envio ESP-NOW exitoso (total=40)
+I (3373) MAIN: Acc=[+0.146,+0.215,-0.927] Gyr=[+8.5,+8.4,-0.9] TouchRaw=0 TouchFiltrado=0 Roll=+111.8 Pitch=+6.6 Estado=CAIDA
+I (3623) MAIN: Acc=[+0.148,+0.217,-0.923] Gyr=[+8.6,+8.2,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+119.0 Pitch=+7.1 Estado=CAIDA
+I (3873) MAIN: Acc=[+0.151,+0.217,-0.923] Gyr=[+8.0,+7.5,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+125.6 Pitch=+7.5 Estado=CAIDA
+I (4123) MAIN: Acc=[+0.153,+0.217,-0.924] Gyr=[+8.8,+8.9,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+131.5 Pitch=+7.8 Estado=CAIDA
+I (4123) ESPNOW: Envio ESP-NOW exitoso (total=60)
+I (4373) MAIN: Acc=[+0.150,+0.216,-0.919] Gyr=[+8.3,+8.0,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+136.9 Pitch=+8.2 Estado=CAIDA
+I (4623) MAIN: Acc=[+0.148,+0.215,-0.931] Gyr=[+8.6,+7.7,-0.3] TouchRaw=0 TouchFiltrado=0 Roll=+141.7 Pitch=+8.3 Estado=CAIDA
+I (4873) MAIN: Acc=[+0.152,+0.216,-0.926] Gyr=[+8.6,+8.9,-0.2] TouchRaw=0 TouchFiltrado=0 Roll=+146.1 Pitch=+8.6 Estado=ACOSTADO
+I (5123) MAIN: Acc=[+0.152,+0.217,-0.924] Gyr=[+8.3,+7.5,-0.2] TouchRaw=0 TouchFiltrado=0 Roll=+150.1 Pitch=+8.9 Estado=ACOSTADO
+I (5123) ESPNOW: Envio ESP-NOW exitoso (total=80)
+I (5373) MAIN: Acc=[+0.151,+0.217,-0.930] Gyr=[+8.2,+7.1,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+153.6 Pitch=+9.0 Estado=ACOSTADO
+I (5623) MAIN: Acc=[+0.153,+0.216,-0.922] Gyr=[+8.0,+8.0,-0.3] TouchRaw=0 TouchFiltrado=0 Roll=+156.8 Pitch=+9.2 Estado=ACOSTADO
+I (5873) MAIN: Acc=[+0.149,+0.217,-0.927] Gyr=[+7.8,+8.0,+0.5] TouchRaw=0 TouchFiltrado=0 Roll=+159.7 Pitch=+9.4 Estado=ACOSTADO
+I (6123) MAIN: Acc=[+0.149,+0.215,-0.928] Gyr=[+9.0,+8.5,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+162.4 Pitch=+9.6 Estado=ACOSTADO
+I (6373) MAIN: Acc=[+0.156,+0.215,-0.925] Gyr=[+8.3,+9.0,-0.3] TouchRaw=0 TouchFiltrado=0 Roll=+164.9 Pitch=+9.8 Estado=ACOSTADO
+I (6623) MAIN: Acc=[+0.146,+0.218,-0.926] Gyr=[+8.0,+7.5,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+166.9 Pitch=+9.8 Estado=ACOSTADO
+I (6623) ESPNOW: Envio ESP-NOW exitoso (total=100)
+I (6873) MAIN: Acc=[+0.152,+0.218,-0.928] Gyr=[+9.0,+8.3,-1.0] TouchRaw=0 TouchFiltrado=0 Roll=+168.9 Pitch=+10.0 Estado=ACOSTADO
+I (7123) MAIN: Acc=[+0.154,+0.213,-0.924] Gyr=[+8.6,+8.9,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+170.7 Pitch=+10.1 Estado=ACOSTADO
+I (7373) MAIN: Acc=[+0.147,+0.218,-0.922] Gyr=[+7.6,+8.2,+0.0] TouchRaw=0 TouchFiltrado=0 Roll=+172.2 Pitch=+10.1 Estado=ACOSTADO
+I (7623) MAIN: Acc=[+0.155,+0.216,-0.922] Gyr=[+9.0,+8.7,-0.9] TouchRaw=0 TouchFiltrado=0 Roll=+173.7 Pitch=+10.2 Estado=ACOSTADO
+I (7623) ESPNOW: Envio ESP-NOW exitoso (total=120)
+I (7873) MAIN: Acc=[+0.151,+0.214,-0.922] Gyr=[+7.8,+7.2,-0.6] TouchRaw=0 TouchFiltrado=0 Roll=+175.0 Pitch=+10.3 Estado=ACOSTADO
+I (8123) MAIN: Acc=[+0.151,+0.218,-0.929] Gyr=[+8.1,+7.9,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+176.1 Pitch=+10.2 Estado=ACOSTADO
+I (8373) MAIN: Acc=[+0.152,+0.218,-0.924] Gyr=[+8.9,+8.9,-1.2] TouchRaw=0 TouchFiltrado=0 Roll=+177.2 Pitch=+10.3 Estado=ACOSTADO
+I (8623) MAIN: Acc=[+0.150,+0.216,-0.925] Gyr=[+7.8,+7.8,-0.6] TouchRaw=0 TouchFiltrado=0 Roll=+178.2 Pitch=+10.4 Estado=ACOSTADO
+I (8623) ESPNOW: Envio ESP-NOW exitoso (total=140)
+I (8873) MAIN: Acc=[+0.149,+0.218,-0.926] Gyr=[+9.0,+8.0,-1.0] TouchRaw=0 TouchFiltrado=0 Roll=+179.0 Pitch=+10.3 Estado=ACOSTADO
+I (9123) MAIN: Acc=[+0.153,+0.216,-0.922] Gyr=[+9.1,+9.0,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+179.9 Pitch=+10.5 Estado=ACOSTADO
+I (9373) MAIN: Acc=[+0.150,+0.215,-0.923] Gyr=[+8.2,+7.7,-0.1] TouchRaw=0 TouchFiltrado=0 Roll=+180.5 Pitch=+10.5 Estado=ACOSTADO
+I (9623) MAIN: Acc=[+0.150,+0.217,-0.928] Gyr=[+8.0,+8.6,-0.6] TouchRaw=0 TouchFiltrado=0 Roll=+181.1 Pitch=+10.6 Estado=ACOSTADO
+I (9623) ESPNOW: Envio ESP-NOW exitoso (total=160)
+I (9873) MAIN: Acc=[+0.152,+0.216,-0.922] Gyr=[+8.2,+8.2,-0.4] TouchRaw=0 TouchFiltrado=0 Roll=+181.7 Pitch=+10.7 Estado=ACOSTADO
+I (10123) MAIN: Acc=[+0.146,+0.219,-0.926] Gyr=[+8.5,+8.0,-0.1] TouchRaw=0 TouchFiltrado=0 Roll=+182.2 Pitch=+10.7 Estado=ACOSTADO
+I (10373) MAIN: Acc=[+0.150,+0.219,-0.924] Gyr=[+8.8,+8.3,-1.0] TouchRaw=0 TouchFiltrado=0 Roll=+182.5 Pitch=+10.7 Estado=ACOSTADO
+I (10623) MAIN: Acc=[+0.151,+0.215,-0.922] Gyr=[+7.9,+8.4,-0.4] TouchRaw=0 TouchFiltrado=0 Roll=+183.0 Pitch=+10.8 Estado=ACOSTADO
+I (10623) ESPNOW: Envio ESP-NOW exitoso (total=180)
+I (10873) MAIN: Acc=[+0.147,+0.217,-0.926] Gyr=[+7.4,+7.9,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=+183.3 Pitch=+10.6 Estado=ACOSTADO
+I (11123) MAIN: Acc=[+0.155,+0.215,-0.926] Gyr=[+8.8,+8.3,-0.7] TouchRaw=0 TouchFiltrado=0 Roll=+183.7 Pitch=+10.7 Estado=ACOSTADO
+I (11373) MAIN: Acc=[+0.151,+0.216,-0.920] Gyr=[+8.3,+7.7,-0.2] TouchRaw=0 TouchFiltrado=0 Roll=+184.0 Pitch=+10.7 Estado=ACOSTADO
+I (11623) MAIN: Acc=[+0.148,+0.218,-0.929] Gyr=[+7.6,+7.2,-0.3] TouchRaw=0 TouchFiltrado=0 Roll=+184.2 Pitch=+10.5 Estado=ACOSTADO
+I (11623) ESPNOW: Envio ESP-NOW exitoso (total=200)
+I (11873) MAIN: Acc=[+0.151,+0.214,-0.921] Gyr=[+8.5,+8.7,-1.0] TouchRaw=0 TouchFiltrado=0 Roll=+184.6 Pitch=+10.6 Estado=ACOSTADO
+I (12123) MAIN: Acc=[+0.152,+0.213,-0.922] Gyr=[+7.4,+7.2,-0.1] TouchRaw=0 TouchFiltrado=0 Roll=+184.8 Pitch=+10.6 Estado=ACOSTADO
+W (12153) ESPNOW: Fallo ESP-NOW (total=20)
+I (12373) MAIN: Acc=[+0.149,+0.218,-0.928] Gyr=[+7.3,+7.3,-1.9] TouchRaw=0 TouchFiltrado=0 Roll=+184.9 Pitch=+10.5 Estado=ACOSTADO
+I (12623) MAIN: Acc=[+0.151,+0.214,-0.925] Gyr=[+8.5,+8.8,+0.1] TouchRaw=0 TouchFiltrado=0 Roll=+185.1 Pitch=+10.5 Estado=ACOSTADO
+I (12873) MAIN: Acc=[+0.151,+0.218,-0.924] Gyr=[+7.8,+7.5,-0.4] TouchRaw=0 TouchFiltrado=0 Roll=+185.3 Pitch=+10.4 Estado=ACOSTADO
+I (13123) MAIN: Acc=[+0.154,+0.215,-0.916] Gyr=[+12.1,+7.2,+0.3] TouchRaw=0 TouchFiltrado=0 Roll=+185.6 Pitch=+10.4 Estado=ACOSTADO
+I (13123) ESPNOW: Envio ESP-NOW exitoso (total=220)
+I (13373) MAIN: Acc=[+0.151,+0.214,-0.918] Gyr=[+8.3,+7.1,+0.0] TouchRaw=0 TouchFiltrado=0 Roll=+186.1 Pitch=+9.8 Estado=ACOSTADO
+I (13623) MAIN: Acc=[+0.150,+0.209,-0.921] Gyr=[+10.0,+7.2,-1.2] TouchRaw=0 TouchFiltrado=0 Roll=+186.3 Pitch=+9.6 Estado=ACOSTADO
+I (13873) MAIN: Acc=[+0.148,+0.231,-0.921] Gyr=[+10.9,+6.4,-1.2] TouchRaw=0 TouchFiltrado=0 Roll=+185.9 Pitch=+10.7 Estado=ACOSTADO
+I (14123) MAIN: Acc=[+0.174,+0.279,-0.916] Gyr=[-60.1,+28.3,+31.9] TouchRaw=0 TouchFiltrado=0 Roll=+174.5 Pitch=+16.5 Estado=ACOSTADO
+I (14123) ESPNOW: Envio ESP-NOW exitoso (total=240)
+I (14373) MAIN: Acc=[+0.182,+0.311,-1.000] Gyr=[+59.3,+53.6,-0.8] TouchRaw=0 TouchFiltrado=0 Roll=+171.0 Pitch=+12.2 Estado=ACOSTADO
+I (14623) MAIN: Acc=[+0.152,+0.247,-0.941] Gyr=[+69.2,-7.6,-56.9] TouchRaw=0 TouchFiltrado=0 Roll=+183.8 Pitch=+1.6 Estado=ACOSTADO
+I (14873) MAIN: Acc=[-0.007,+0.116,-1.037] Gyr=[+23.3,-94.5,-47.5] TouchRaw=0 TouchFiltrado=0 Roll=+186.7 Pitch=-13.8 Estado=ACOSTADO
+I (15123) MAIN: Acc=[-0.222,+0.151,-0.906] Gyr=[+8.5,-111.0,-6.4] TouchRaw=0 TouchFiltrado=0 Roll=+187.8 Pitch=-38.3 Estado=ACOSTADO
+I (15123) ESPNOW: Envio ESP-NOW exitoso (total=260)
+I (15373) MAIN: Acc=[-0.464,+0.172,-0.856] Gyr=[+37.6,-82.7,-2.5] TouchRaw=0 TouchFiltrado=0 Roll=+191.0 Pitch=-57.3 Estado=ACOSTADO
+I (15623) MAIN: Acc=[-0.617,+0.102,-0.683] Gyr=[+49.1,-22.1,-52.1] TouchRaw=0 TouchFiltrado=0 Roll=+196.8 Pitch=-65.1 Estado=ACOSTADO
+I (15873) MAIN: Acc=[-0.704,+0.041,-0.625] Gyr=[+5.3,-110.8,-13.1] TouchRaw=0 TouchFiltrado=0 Roll=+182.7 Pitch=-74.7 Estado=ACOSTADO
+I (16123) MAIN: Acc=[-0.785,+0.016,-0.496] Gyr=[+4.6,-61.8,-51.4] TouchRaw=0 TouchFiltrado=0 Roll=+173.5 Pitch=-80.1 Estado=ACOSTADO
+I (16123) ESPNOW: Envio ESP-NOW exitoso (total=280)
+I (16373) MAIN: Acc=[-0.868,-0.055,-0.351] Gyr=[+11.3,-100.1,-21.9] TouchRaw=0 TouchFiltrado=0 Roll=+142.2 Pitch=-80.5 Estado=ACOSTADO
+I (16623) MAIN: Acc=[-0.938,-0.147,-0.195] Gyr=[+22.2,-17.7,+15.4] TouchRaw=0 TouchFiltrado=0 Roll=+119.5 Pitch=-76.6 Estado=ACOSTADO
+I (16873) MAIN: Acc=[-0.926,-0.079,-0.154] Gyr=[+8.4,+13.8,-11.5] TouchRaw=0 TouchFiltrado=0 Roll=+102.5 Pitch=-64.9 Estado=PARADO
+I (17123) MAIN: Acc=[-0.948,-0.147,-0.115] Gyr=[+7.5,-5.6,-1.0] TouchRaw=0 TouchFiltrado=0 Roll=+81.4 Pitch=-53.6 Estado=PARADO
+I (17123) ESPNOW: Envio ESP-NOW exitoso (total=300)
+I (17373) MAIN: Acc=[-0.943,-0.104,-0.075] Gyr=[-1.7,-21.8,+2.1] TouchRaw=0 TouchFiltrado=0 Roll=+61.4 Pitch=-44.2 Estado=PARADO
+I (17623) MAIN: Acc=[-0.942,-0.098,-0.041] Gyr=[-14.7,+2.3,+31.8] TouchRaw=0 TouchFiltrado=0 Roll=+42.8 Pitch=-32.3 Estado=PARADO
+I (17873) MAIN: Acc=[-0.985,-0.072,-0.063] Gyr=[+3.8,+5.1,+4.1] TouchRaw=0 TouchFiltrado=0 Roll=+26.3 Pitch=-20.4 Estado=PARADO
+I (18123) MAIN: Acc=[-0.969,-0.042,-0.045] Gyr=[+9.3,-2.8,-2.1] TouchRaw=0 TouchFiltrado=0 Roll=+13.0 Pitch=-9.5 Estado=PARADO
+I (18373) MAIN: Acc=[-0.959,-0.045,-0.064] Gyr=[+16.6,+8.6,-9.4] TouchRaw=0 TouchFiltrado=0 Roll=+1.5 Pitch=-1.8 Estado=PARADO
+I (18623) MAIN: Acc=[-0.968,-0.068,-0.013] Gyr=[+5.2,+8.0,-9.9] TouchRaw=0 TouchFiltrado=0 Roll=-9.2 Pitch=+9.1 Estado=PARADO
+I (18623) ESPNOW: Envio ESP-NOW exitoso (total=320)
+I (18873) MAIN: Acc=[-0.994,-0.098,-0.065] Gyr=[-3.1,+29.7,-3.5] TouchRaw=0 TouchFiltrado=0 Roll=-19.3 Pitch=+19.1 Estado=PARADO
+I (19123) MAIN: Acc=[-0.950,-0.059,-0.012] Gyr=[-6.8,+45.9,-0.5] TouchRaw=0 TouchFiltrado=0 Roll=-27.9 Pitch=+28.5 Estado=PARADO
+I (19373) MAIN: Acc=[-0.922,+0.004,-0.082] Gyr=[+6.5,-7.8,+28.4] TouchRaw=0 TouchFiltrado=0 Roll=-29.7 Pitch=+42.9 Estado=PARADO
+I (19623) MAIN: Acc=[-0.823,+0.073,+0.146] Gyr=[-85.8,+282.7,+23.4] TouchRaw=0 TouchFiltrado=0 Roll=-36.0 Pitch=+74.0 Estado=PARADO
+I (19623) ESPNOW: Envio ESP-NOW exitoso (total=340)
+I (19873) MAIN: Acc=[-0.387,-0.113,-1.063] Gyr=[+1.9,+380.9,-10.4] TouchRaw=0 TouchFiltrado=0 Roll=-40.7 Pitch=+155.9 Estado=CAMINANDO
+I (20123) MAIN: Acc=[+0.400,+0.250,-0.982] Gyr=[-71.4,+156.3,+78.6] TouchRaw=0 TouchFiltrado=0 Roll=-28.1 Pitch=+224.6 Estado=CAMINANDO
+I (20373) MAIN: Acc=[+0.810,-0.165,-0.542] Gyr=[-83.8,+24.1,-15.8] TouchRaw=0 TouchFiltrado=0 Roll=-8.8 Pitch=+263.4 Estado=CAMINANDO
+I (20623) MAIN: Acc=[+0.885,-0.203,-0.289] Gyr=[-34.5,+121.6,-254.1] TouchRaw=0 TouchFiltrado=0 Roll=-3.7 Pitch=+277.2 Estado=CAMINANDO
+I (20623) ESPNOW: Envio ESP-NOW exitoso (total=360)
+I (20873) MAIN: Acc=[+1.043,-0.134,-0.249] Gyr=[+48.0,-103.1,+87.8] TouchRaw=0 TouchFiltrado=0 Roll=-23.1 Pitch=+237.7 Estado=CAMINANDO
+I (21123) MAIN: Acc=[+0.823,-0.192,-0.241] Gyr=[-47.6,-169.2,+22.2] TouchRaw=0 TouchFiltrado=0 Roll=-27.0 Pitch=+166.5 Estado=CAMINANDO
+I (21373) MAIN: Acc=[+0.971,-0.205,-0.241] Gyr=[+60.4,+79.7,+19.0] TouchRaw=0 TouchFiltrado=0 Roll=-35.5 Pitch=+169.0 Estado=CAMINANDO
+I (21623) MAIN: Acc=[+0.942,-0.209,-0.218] Gyr=[-114.5,+88.4,+33.7] TouchRaw=0 TouchFiltrado=0 Roll=-56.8 Pitch=+182.4 Estado=CAMINANDO
+I (21623) ESPNOW: Envio ESP-NOW exitoso (total=380)
+I (21873) MAIN: Acc=[+0.935,-0.260,-0.103] Gyr=[+42.5,-98.0,-34.7] TouchRaw=0 TouchFiltrado=0 Roll=-66.2 Pitch=+160.0 Estado=CAMINANDO
+I (22123) MAIN: Acc=[+0.951,-0.233,-0.198] Gyr=[-4.7,-92.0,+31.4] TouchRaw=0 TouchFiltrado=0 Roll=-72.1 Pitch=+111.6 Estado=CAMINANDO
+I (22373) MAIN: Acc=[+0.888,-0.208,-0.312] Gyr=[-32.3,-90.9,+6.0] TouchRaw=0 TouchFiltrado=0 Roll=-73.3 Pitch=+76.1 Estado=CAMINANDO
+I (22623) MAIN: Acc=[+0.911,-0.253,-0.241] Gyr=[+37.5,+32.4,-20.4] TouchRaw=0 TouchFiltrado=0 Roll=-78.9 Pitch=+72.3 Estado=CAMINANDO
+I (22623) ESPNOW: Envio ESP-NOW exitoso (total=400)
+I (22873) MAIN: Acc=[+0.979,-0.252,-0.103] Gyr=[-1.9,+164.1,-22.2] TouchRaw=0 TouchFiltrado=0 Roll=-74.3 Pitch=+83.7 Estado=CAMINANDO
+I (23123) MAIN: Acc=[+0.928,-0.190,-0.283] Gyr=[-46.0,+57.8,+1.9] TouchRaw=0 TouchFiltrado=0 Roll=-87.5 Pitch=+85.0 Estado=CAMINANDO
+I (23373) MAIN: Acc=[+0.945,-0.275,-0.198] Gyr=[-24.6,-70.8,-34.4] TouchRaw=0 TouchFiltrado=0 Roll=-91.5 Pitch=+58.3 Estado=CAMINANDO
+I (23623) MAIN: Acc=[+0.977,-0.277,-0.127] Gyr=[-1.8,-18.9,+45.7] TouchRaw=0 TouchFiltrado=0 Roll=-95.9 Pitch=+32.6 Estado=CAMINANDO
+I (23873) MAIN: Acc=[+0.870,-0.180,-0.165] Gyr=[+3.5,+0.0,+5.3] TouchRaw=0 TouchFiltrado=0 Roll=-103.7 Pitch=+9.9 Estado=CAMINANDO
+I (24123) MAIN: Acc=[+0.964,-0.232,-0.123] Gyr=[+77.0,+73.7,-6.2] TouchRaw=0 TouchFiltrado=0 Roll=-96.7 Pitch=+15.3 Estado=CAMINANDO
+W (24143) ESPNOW: Fallo ESP-NOW (total=40)
+I (24153) ESPNOW: Envio ESP-NOW exitoso (total=420)
+I (24373) MAIN: Acc=[+0.922,-0.310,-0.221] Gyr=[-2.9,+38.0,-4.8] TouchRaw=0 TouchFiltrado=0 Roll=-93.1 Pitch=+22.1 Estado=CAMINANDO
+I (24623) MAIN: Acc=[+0.892,-0.257,-0.150] Gyr=[+3.6,+26.1,+42.7] TouchRaw=0 TouchFiltrado=0 Roll=-94.8 Pitch=+13.4 Estado=PARADO
+I (24873) MAIN: Acc=[+0.990,-0.289,-0.111] Gyr=[-43.4,+2.8,+10.5] TouchRaw=0 TouchFiltrado=0 Roll=-104.5 Pitch=+10.8 Estado=PARADO
+I (25123) MAIN: Acc=[+0.969,-0.229,-0.094] Gyr=[-15.7,+12.0,+18.0] TouchRaw=0 TouchFiltrado=0 Roll=-112.4 Pitch=+1.2 Estado=PARADO
+I (25123) ESPNOW: Envio ESP-NOW exitoso (total=440)
+I (25373) MAIN: Acc=[+0.991,-0.213,-0.104] Gyr=[+8.9,+12.4,-21.6] TouchRaw=0 TouchFiltrado=0 Roll=-111.4 Pitch=-3.3 Estado=PARADO
+I (25623) MAIN: Acc=[+0.939,-0.212,-0.058] Gyr=[+46.0,+9.7,-21.6] TouchRaw=0 TouchFiltrado=0 Roll=-103.8 Pitch=-11.5 Estado=PARADO
+I (25873) MAIN: Acc=[+0.918,-0.227,-0.124] Gyr=[+22.5,-10.0,-3.0] TouchRaw=0 TouchFiltrado=0 Roll=-100.1 Pitch=-14.2 Estado=PARADO
+I (26123) MAIN: Acc=[+0.913,-0.243,-0.114] Gyr=[-17.4,+0.8,+11.9] TouchRaw=0 TouchFiltrado=0 Roll=-102.8 Pitch=-17.7 Estado=PARADO
+I (26123) ESPNOW: Envio ESP-NOW exitoso (total=460)
+I (26373) MAIN: Acc=[+0.979,-0.231,-0.036] Gyr=[-19.3,+9.8,+29.8] TouchRaw=0 TouchFiltrado=0 Roll=-108.4 Pitch=-17.6 Estado=PARADO
+I (26623) MAIN: Acc=[+1.003,-0.204,-0.076] Gyr=[+13.5,-29.0,+37.3] TouchRaw=0 TouchFiltrado=0 Roll=-112.6 Pitch=-21.5 Estado=PARADO
+I (26873) MAIN: Acc=[+1.004,-0.162,+0.036] Gyr=[+2.8,+47.8,-90.0] TouchRaw=0 TouchFiltrado=0 Roll=-106.0 Pitch=-26.8 Estado=PARADO
+I (27123) MAIN: Acc=[+0.948,-0.213,+0.128] Gyr=[+14.6,+88.1,-20.4] TouchRaw=0 TouchFiltrado=0 Roll=-98.4 Pitch=-14.6 Estado=PARADO
+I (27123) ESPNOW: Envio ESP-NOW exitoso (total=480)
+I (27373) MAIN: Acc=[+1.012,-0.167,-0.000] Gyr=[+28.9,-60.1,+25.2] TouchRaw=0 TouchFiltrado=0 Roll=-103.4 Pitch=-16.2 Estado=PARADO
+I (27623) MAIN: Acc=[+1.003,-0.224,-0.227] Gyr=[+17.6,-297.5,+23.0] TouchRaw=0 TouchFiltrado=0 Roll=-111.4 Pitch=-67.5 Estado=PARADO
+I (27873) MAIN: Acc=[+0.939,-0.142,-0.163] Gyr=[+16.8,+180.2,+20.3] TouchRaw=0 TouchFiltrado=0 Roll=-111.5 Pitch=-71.5 Estado=CAMINANDO
+I (28123) MAIN: Acc=[+1.072,-0.111,-0.108] Gyr=[-0.8,+219.3,-2.0] TouchRaw=0 TouchFiltrado=0 Roll=-110.2 Pitch=-23.3 Estado=CAMINANDO
+I (28123) ESPNOW: Envio ESP-NOW exitoso (total=500)
+I (28373) MAIN: Acc=[+0.969,-0.190,+0.183] Gyr=[+49.3,-31.2,+77.6] TouchRaw=0 TouchFiltrado=0 Roll=-107.5 Pitch=-13.5 Estado=CAMINANDO
+I (28623) MAIN: Acc=[+1.127,-0.143,-0.098] Gyr=[+80.2,-159.4,+69.7] TouchRaw=0 TouchFiltrado=0 Roll=-107.1 Pitch=-39.1 Estado=CAMINANDO
+I (28873) MAIN: Acc=[+0.900,-0.155,-0.186] Gyr=[-64.6,-123.1,+4.3] TouchRaw=0 TouchFiltrado=0 Roll=-109.1 Pitch=-87.4 Estado=CAMINANDO
+I (29123) MAIN: Acc=[+0.965,-0.197,-0.117] Gyr=[+29.5,+172.6,+22.0] TouchRaw=0 TouchFiltrado=0 Roll=-109.8 Pitch=-65.0 Estado=CAMINANDO
+I (29123) ESPNOW: Envio ESP-NOW exitoso (total=520)
+I (29373) MAIN: Acc=[+1.043,-0.155,+0.071] Gyr=[+57.1,+91.8,+70.7] TouchRaw=0 TouchFiltrado=0 Roll=-106.9 Pitch=-24.0 Estado=CAMINANDO
+I (29623) MAIN: Acc=[+1.038,-0.142,+0.111] Gyr=[+8.2,-101.9,-37.0] TouchRaw=0 TouchFiltrado=0 Roll=-107.2 Pitch=-18.3 Estado=CAMINANDO
+I (29873) MAIN: Acc=[+1.057,-0.179,+0.000] Gyr=[+30.0,-198.9,+16.9] TouchRaw=0 TouchFiltrado=0 Roll=-100.4 Pitch=-67.3 Estado=CAMINANDO
+I (30123) MAIN: Acc=[+0.807,-0.069,-0.056] Gyr=[+4.9,-7.8,+42.0] TouchRaw=0 TouchFiltrado=0 Roll=-104.5 Pitch=-98.5 Estado=CAMINANDO
+I (30373) MAIN: Acc=[+1.017,-0.162,-0.010] Gyr=[+45.0,+239.8,-36.8] TouchRaw=0 TouchFiltrado=0 Roll=-100.9 Pitch=-56.5 Estado=CAMINANDO
+I (30623) MAIN: Acc=[+1.006,-0.158,+0.179] Gyr=[+93.4,+33.7,+40.0] TouchRaw=0 TouchFiltrado=0 Roll=-93.3 Pitch=-12.5 Estado=CAMINANDO
+I (30623) ESPNOW: Envio ESP-NOW exitoso (total=540)
+I (30873) MAIN: Acc=[+1.045,-0.223,+0.142] Gyr=[-54.5,-149.5,-77.5] TouchRaw=0 TouchFiltrado=0 Roll=-94.7 Pitch=-23.6 Estado=CAMINANDO
+I (31123) MAIN: Acc=[+0.975,-0.110,-0.088] Gyr=[+5.7,-187.8,+34.8] TouchRaw=0 TouchFiltrado=0 Roll=-89.6 Pitch=-85.4 Estado=CAMINANDO
+I (31373) MAIN: Acc=[+0.920,-0.107,-0.212] Gyr=[-16.0,+192.9,-18.8] TouchRaw=0 TouchFiltrado=0 Roll=-95.4 Pitch=-93.3 Estado=CAMINANDO
+I (31623) MAIN: Acc=[+0.963,-0.140,-0.210] Gyr=[+22.8,+11.0,+7.4] TouchRaw=0 TouchFiltrado=0 Roll=-99.4 Pitch=-77.5 Estado=PARADO
+I (31623) ESPNOW: Envio ESP-NOW exitoso (total=560)
+I (31873) MAIN: Acc=[+0.972,-0.129,-0.198] Gyr=[+4.3,+4.3,-1.1] TouchRaw=0 TouchFiltrado=0 Roll=-102.7 Pitch=-74.8 Estado=PARADO
+I (32123) MAIN: Acc=[+0.974,-0.127,-0.203] Gyr=[-3.5,-24.1,-8.5] TouchRaw=0 TouchFiltrado=0 Roll=-106.8 Pitch=-73.0 Estado=PARADO
+I (32373) MAIN: Acc=[+0.965,-0.155,-0.174] Gyr=[+5.4,-1.8,+14.5] TouchRaw=0 TouchFiltrado=0 Roll=-109.5 Pitch=-72.7 Estado=PARADO
+I (32623) MAIN: Acc=[+0.961,-0.150,-0.187] Gyr=[-0.2,+3.8,-6.7] TouchRaw=0 TouchFiltrado=0 Roll=-112.4 Pitch=-71.6 Estado=PARADO
+I (32623) ESPNOW: Envio ESP-NOW exitoso (total=580)
+I (32873) MAIN: Acc=[+0.968,-0.149,-0.165] Gyr=[+3.9,+5.7,+4.4] TouchRaw=0 TouchFiltrado=0 Roll=-115.3 Pitch=-70.8 Estado=PARADO
+I (33123) MAIN: Acc=[+0.875,-0.071,+0.466] Gyr=[+83.7,+155.4,-31.8] TouchRaw=0 TouchFiltrado=0 Roll=-104.5 Pitch=-59.4 Estado=PARADO
+I (33373) MAIN: Acc=[+0.989,-0.414,+0.268] Gyr=[+59.3,-152.2,-76.4] TouchRaw=0 TouchFiltrado=0 Roll=-107.6 Pitch=-13.5 Estado=CAMINANDO
+I (33623) MAIN: Acc=[+1.130,-0.251,+0.002] Gyr=[+50.9,-271.0,-1.6] TouchRaw=0 TouchFiltrado=0 Roll=-99.6 Pitch=-61.5 Estado=CAMINANDO
+I (33623) ESPNOW: Envio ESP-NOW exitoso (total=600)
+I (33873) MAIN: Acc=[+1.020,-0.078,-0.071] Gyr=[+1.8,-71.3,+50.6] TouchRaw=0 TouchFiltrado=0 Roll=-98.2 Pitch=-103.9 Estado=CAMINANDO
+I (34123) MAIN: Acc=[+1.001,-0.153,-0.203] Gyr=[+60.3,+98.8,-14.5] TouchRaw=0 TouchFiltrado=0 Roll=-97.0 Pitch=-76.5 Estado=CAMINANDO
+I (34373) MAIN: Acc=[+0.951,-0.233,+0.015] Gyr=[-106.8,-58.9,-105.2] TouchRaw=0 TouchFiltrado=0 Roll=-98.3 Pitch=-33.3 Estado=CAMINANDO
+I (34623) MAIN: Acc=[+1.066,-0.286,+0.085] Gyr=[-29.4,-162.9,-132.1] TouchRaw=0 TouchFiltrado=0 Roll=-100.2 Pitch=-45.7 Estado=CAMINANDO
+I (34623) ESPNOW: Envio ESP-NOW exitoso (total=620)
+I (34873) MAIN: Acc=[+0.898,-0.059,-0.213] Gyr=[+99.5,-224.9,+5.5] TouchRaw=0 TouchFiltrado=0 Roll=-81.0 Pitch=-114.1 Estado=CAMINANDO
+I (35123) MAIN: Acc=[+0.998,-0.155,-0.331] Gyr=[+23.7,+102.0,+36.3] TouchRaw=0 TouchFiltrado=0 Roll=-89.9 Pitch=-90.2 Estado=CAMINANDO
+I (35373) MAIN: Acc=[+0.955,-0.151,-0.230] Gyr=[+32.3,-5.6,+40.9] TouchRaw=0 TouchFiltrado=0 Roll=-93.1 Pitch=-82.7 Estado=CAMINANDO
+I (35623) MAIN: Acc=[+0.982,-0.123,-0.202] Gyr=[-4.7,+21.8,+26.0] TouchRaw=0 TouchFiltrado=0 Roll=-100.3 Pitch=-80.9 Estado=PARADO
+I (35623) ESPNOW: Envio ESP-NOW exitoso (total=640)
+I (35873) MAIN: Acc=[+0.954,-0.120,-0.229] Gyr=[+7.3,+1.4,+8.5] TouchRaw=0 TouchFiltrado=0 Roll=-105.1 Pitch=-79.9 Estado=PARADO
+I (36123) MAIN: Acc=[+1.528,-0.258,-0.533] Gyr=[-135.2,+258.3,-130.2] TouchRaw=0 TouchFiltrado=0 Roll=-112.7 Pitch=-61.9 Estado=PARADO
+W (36153) ESPNOW: Fallo ESP-NOW (total=60)
+I (36373) MAIN: Acc=[+0.437,+0.126,+0.181] Gyr=[+200.3,+221.7,-118.5] TouchRaw=0 TouchFiltrado=0 Roll=-86.2 Pitch=-125.0 Estado=CAMINANDO
+I (36573) MAIN: CAIDA: impacto 8.16g tras libre-vuelo en 150ms
+I (36623) MAIN: Acc=[-0.215,-0.041,-0.075] Gyr=[-395.9,+512.0,-57.2] TouchRaw=0 TouchFiltrado=0 Roll=-97.1 Pitch=-43.8 Estado=CAIDA
+I (36873) MAIN: Acc=[+1.074,+0.147,+0.193] Gyr=[+243.7,-340.7,+201.5] TouchRaw=0 TouchFiltrado=0 Roll=-76.3 Pitch=-90.4 Estado=CAIDA
+I (37123) MAIN: Acc=[+0.499,+0.032,-0.047] Gyr=[+170.0,-26.6,-14.9] TouchRaw=0 TouchFiltrado=0 Roll=-53.7 Pitch=-84.8 Estado=CAIDA
+I (37123) ESPNOW: Envio ESP-NOW exitoso (total=660)
+I (37373) MAIN: Acc=[+1.619,+0.128,+0.105] Gyr=[+148.6,+386.6,-174.7] TouchRaw=0 TouchFiltrado=0 Roll=-12.9 Pitch=-120.4 Estado=CAIDA
+I (37623) MAIN: Acc=[+0.875,+0.069,-0.077] Gyr=[+46.9,-234.8,+73.0] TouchRaw=0 TouchFiltrado=0 Roll=-34.0 Pitch=-50.8 Estado=CAIDA
+I (37873) MAIN: Acc=[+1.003,+0.171,+0.239] Gyr=[+179.9,-512.0,+292.1] TouchRaw=0 TouchFiltrado=0 Roll=-1.9 Pitch=-173.8 Estado=CAIDA
+I (38123) MAIN: Acc=[+1.929,+0.106,+0.064] Gyr=[-127.3,+512.0,-451.0] TouchRaw=0 TouchFiltrado=0 Roll=-1.0 Pitch=-77.9 Estado=CAIDA
+I (38123) ESPNOW: Envio ESP-NOW exitoso (total=680)
+I (38373) MAIN: Acc=[+1.196,+0.124,+0.129] Gyr=[+73.0,-512.0,+381.6] TouchRaw=0 TouchFiltrado=0 Roll=+3.2 Pitch=-106.2 Estado=CAIDA
+I (38623) MAIN: Acc=[+0.952,+0.112,+0.140] Gyr=[-194.8,+384.9,-369.0] TouchRaw=0 TouchFiltrado=0 Roll=+23.3 Pitch=-149.2 Estado=CAIDA
+I (38873) MAIN: Acc=[+1.106,+0.021,+0.004] Gyr=[+7.8,+135.4,-145.7] TouchRaw=0 TouchFiltrado=0 Roll=+25.9 Pitch=-41.0 Estado=CAIDA
+I (39123) MAIN: Acc=[+1.112,+0.165,+0.212] Gyr=[+5.8,-437.4,+319.4] TouchRaw=0 TouchFiltrado=0 Roll=+33.4 Pitch=-153.4 Estado=CAIDA
+I (39123) ESPNOW: Envio ESP-NOW exitoso (total=700)
+I (39373) MAIN: Acc=[+1.615,+0.095,+0.106] Gyr=[-105.9,+512.0,-372.2] TouchRaw=0 TouchFiltrado=0 Roll=+18.6 Pitch=-85.4 Estado=CAIDA
+I (39623) MAIN: Acc=[+1.498,+0.126,+0.160] Gyr=[+11.7,-512.0,+219.0] TouchRaw=0 TouchFiltrado=0 Roll=+15.1 Pitch=-100.7 Estado=CAIDA
+I (39873) MAIN: Acc=[+0.675,+0.141,+0.215] Gyr=[+184.3,+291.0,+19.8] TouchRaw=0 TouchFiltrado=0 Roll=+30.9 Pitch=-158.1 Estado=CAIDA
+I (40123) MAIN: Acc=[+1.286,+0.028,-0.212] Gyr=[+512.0,+362.2,-253.2] TouchRaw=0 TouchFiltrado=0 Roll=+72.0 Pitch=-41.8 Estado=CAIDA
+I (40123) ESPNOW: Envio ESP-NOW exitoso (total=720)
+I (40373) MAIN: Acc=[+0.768,+0.230,+0.615] Gyr=[+19.1,+34.2,+36.9] TouchRaw=0 TouchFiltrado=0 Roll=+57.2 Pitch=-29.5 Estado=CAIDA
+I (40623) MAIN: Acc=[+0.711,+0.021,+0.768] Gyr=[+191.9,+192.6,+267.4] TouchRaw=0 TouchFiltrado=0 Roll=+71.7 Pitch=-1.2 Estado=CAMINANDO
+I (40873) MAIN: Acc=[+0.215,-0.034,+1.012] Gyr=[+61.6,+146.6,+69.2] TouchRaw=0 TouchFiltrado=0 Roll=+85.7 Pitch=+48.4 Estado=CAMINANDO

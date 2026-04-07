@@ -77,12 +77,37 @@ static const char *TAG_NOW  = "ESPNOW"; // Mensajes del sistema de radio ESP-NOW
 // --- Registros del sensor táctil CST816S ---
 #define DIRECCION_CST816S   0x15  // Dirección I2C del CST816S
 #define CST816S_REG_GESTID  0x01  // Registro de gesto: indica qué tipo de toque se detectó
+#define CST816S_REG_FINGERNUM 0x02 // Número de dedos detectados
+#define CST816S_REG_XPOS_H   0x03  // Coordenada X alta (4 bits)
+#define CST816S_REG_XPOS_L   0x04  // Coordenada X baja (8 bits)
+#define CST816S_REG_YPOS_H   0x05  // Coordenada Y alta (4 bits)
+#define CST816S_REG_YPOS_L   0x06  // Coordenada Y baja (8 bits)
 #define CST816S_GESTO_TAP   0x05  // Código de gesto "tap" (toque simple con el dedo)
 
 // --- Parámetros del filtro complementario (combina acelerómetro y giroscopio) ---
 #define FACTOR_COMP_ACCEL   0.02f // Peso del acelerómetro: 2% (corrige la deriva lenta del giroscopio)
 #define FACTOR_COMP_GYRO    0.98f // Peso del giroscopio: 98% (responde rápido a movimientos bruscos)
 #define PERIODO_MUESTREO_S  0.05f // Período de muestreo: 0,05 s = 50 ms = 20 lecturas por segundo
+
+// --- Umbrales de clasificación de actividad (calibrables en campo) ---
+#define TOUCH_FILTRO_ALPHA            0.82f   // Filtro LP para touch: alto = más suave
+#define TOUCH_UMBRAL_ON               580U    // Histéresis: activar contacto
+#define TOUCH_UMBRAL_OFF              420U    // Histéresis: desactivar contacto
+#define UMBRAL_G_LIBRE_VUELO          0.30f   // Fase libre vuelo de caída (acc ≤0.30g)
+#define UMBRAL_G_IMPACTO_ALTO         2.0f    // Impacto real de caída al suelo (acc ≥2g)
+#define VENTANA_LIBRE_VUELO_MS        1200U   // Ventana libre vuelo → impacto (ms)
+#define UMBRAL_EJE_Z_ACOSTADO         0.80f   // |az| ≥0.80g → dispositivo horizontal → acostado
+#define UMBRAL_GYRO_POSTURA           20.0f   // Umbral de giro para clasificar postura (permite bias)
+#define UMBRAL_MOV_DINAMICO           0.09f   // Dinámica real de aceleración para marcha
+#define UMBRAL_GYRO_CAMINANDO         25.0f   // Actividad angular mínima de marcha
+#define UMBRAL_GYRO_QUIETO            10.0f   // Actividad angular de reposo
+#define MUESTRAS_CAMINANDO            3U      // Persistencia para CAMINANDO
+#define MUESTRAS_REPOSO               4U      // Persistencia para PARADO/ACOSTADO
+#define RETENCION_CAIDA_MS            4000U   // Retención del estado CAIDA
+
+#ifndef _Static_assert
+#define _Static_assert static_assert
+#endif
 
 // Dirección MAC del receptor: identifica de forma única al otro ESP32 que recibirá los datos
 // Es como el número de teléfono al que se llama — cada ESP32 tiene una MAC única grabada de fábrica
@@ -110,28 +135,44 @@ typedef struct {
 } angulos_t;
 
 /**
+ * @brief Estados de actividad reportados al receptor.
+ */
+typedef enum {
+    ESTADO_PARADO = 0,
+    ESTADO_ACOSTADO = 1,
+    ESTADO_CAMINANDO = 2,
+    ESTADO_CAIDA = 3
+} estado_actividad_t;
+
+/**
  * @brief Paquete transmitido por ESP-NOW al receptor.
- * @details Se declara packed para evitar relleno y mantener 32 bytes exactos.
+ * @details Se declara packed para evitar relleno y mantener 40 bytes exactos.
  */
 typedef struct __attribute__((packed)) {
-    float roll;  // Ángulo de alabeo (inclinación lateral) en grados
-    float pitch; // Ángulo de cabeceo (inclinación frontal) en grados
-    float acc_x; // Aceleración eje X en g
-    float acc_y; // Aceleración eje Y en g
-    float acc_z; // Aceleración eje Z en g
-    float gyr_x; // Velocidad angular eje X en °/s
-    float gyr_y; // Velocidad angular eje Y en °/s
-    float gyr_z; // Velocidad angular eje Z en °/s
-} paquete_espnow_t;
-// Verificación en tiempo de compilación: si el tamaño no es 32 bytes, el compilador da error
-// Esto previene que un cambio accidental rompa la compatibilidad con el receptor
-static_assert(sizeof(paquete_espnow_t) == 32, "paquete_espnow_t debe ser 32 bytes");
+    float roll;        // 4
+    float pitch;       // 4
+    float acc_x;       // 4
+    float acc_y;       // 4
+    float acc_z;       // 4
+    float gyr_x;       // 4
+    float gyr_y;       // 4
+    float gyr_z;       // 4
+    uint16_t touch_raw;      // 2
+    uint16_t touch_filtrado; // 2
+    uint8_t estado;          // 1
+    uint8_t version;         // 1
+    uint8_t reservado[2];    // 2
+} datos_mpu_touch_t;
+_Static_assert(sizeof(datos_mpu_touch_t) == 40, "Payload debe ser 40 bytes");
 
 // --- Variables globales compartidas entre las dos tareas ---
 // "static" significa que solo son visibles dentro de este archivo
 static datos_imu_t       g_datos_imu  = {}; // Última lectura del IMU (aceleración y giro)
 static angulos_t         g_angulos    = {}; // Últimos ángulos calculados (roll y pitch)
-static paquete_espnow_t  g_paquete    = {}; // Último paquete preparado para enviar
+static datos_mpu_touch_t g_paquete    = {}; // Último paquete preparado para enviar
+static uint16_t          g_touch_raw = 0;   // Valor touch crudo normalizado
+static uint16_t          g_touch_filtrado = 0; // Valor touch filtrado para clasificación
+static estado_actividad_t g_estado_actividad = ESTADO_PARADO; // Estado de actividad actual
 static float             g_bateria_v  = 0.0f; // Voltaje actual de la batería en voltios
 // El mutex (mutual exclusion) es un "candado": antes de leer/escribir las variables de arriba,
 // una tarea toma el candado, hace su trabajo, y lo suelta para que la otra pueda entrar
@@ -170,8 +211,14 @@ static void pantalla_dibujar_texto(int16_t x, int16_t y, const char *texto, uint
 static void pantalla_inicializar(void);       // Inicializa la pantalla GC9A01 (secuencia de arranque)
 static void touch_inicializar(void);          // Inicializa el táctil y configura la interrupción GPIO
 static uint8_t touch_leer_gesto(void);        // Lee qué tipo de gesto se detectó (tap, swipe, etc.)
+static uint16_t touch_leer_raw_capacitivo(void); // Lee touch crudo y lo normaliza a 0..4095
 static float bateria_leer_voltios(void);      // Lee el voltaje de la batería desde el ADC
 static void espnow_inicializar(void);         // Inicializa WiFi y ESP-NOW y registra el receptor
+static const char *texto_estado_actividad(estado_actividad_t estado); // Convierte enum a texto
+static estado_actividad_t clasificar_actividad_fusionada(float ax_g, float ay_g, float az_g,
+                                                         float gx_dps, float gy_dps, float gz_dps,
+                                                         uint16_t touch_raw, uint16_t touch_filtrado,
+                                                         bool touch_activo); // Clasifica actividad IMU+touch
 static void tarea_captura(void *parametro);   // Tarea: captura IMU y envía por radio cada 50 ms
 static void tarea_interfaz(void *parametro);  // Tarea: actualiza pantalla y maneja el táctil
 
@@ -637,6 +684,165 @@ static uint8_t touch_leer_gesto(void)
     return gesto; // Devuelve el código de gesto detectado
 }
 
+/**
+ * @brief Lee una métrica touch cruda y la normaliza a rango 0..4095.
+ * @details Usa coordenadas X/Y válidas cuando hay dedo presente.
+ */
+static uint16_t touch_leer_raw_capacitivo(void)
+{
+    if (g_dev_touch == NULL) {
+        return 0;
+    }
+
+    uint8_t buffer[5] = {0};
+    if (i2c_leer_registros(g_dev_touch, CST816S_REG_FINGERNUM, buffer, sizeof(buffer)) != ESP_OK) {
+        return 0;
+    }
+
+    uint8_t dedos = (uint8_t)(buffer[0] & 0x0FU);
+    if (dedos == 0U) {
+        return 0;
+    }
+
+    uint16_t x = (uint16_t)(((uint16_t)(buffer[1] & 0x0FU) << 8) | buffer[2]);
+    uint16_t y = (uint16_t)(((uint16_t)(buffer[3] & 0x0FU) << 8) | buffer[4]);
+    if (x > (ANCHO_PANTALLA - 1U)) {
+        x = ANCHO_PANTALLA - 1U;
+    }
+    if (y > (ALTO_PANTALLA - 1U)) {
+        y = ALTO_PANTALLA - 1U;
+    }
+
+    uint32_t x_norm = ((uint32_t)x * 4095U) / (ANCHO_PANTALLA - 1U);
+    uint32_t y_norm = ((uint32_t)y * 4095U) / (ALTO_PANTALLA - 1U);
+    return (uint16_t)((x_norm + y_norm) / 2U);
+}
+
+/**
+ * @brief Convierte estado de actividad a texto legible en logs y pantalla.
+ */
+static const char *texto_estado_actividad(estado_actividad_t estado)
+{
+    switch (estado) {
+        case ESTADO_PARADO:
+            return "PARADO";
+        case ESTADO_ACOSTADO:
+            return "ACOSTADO";
+        case ESTADO_CAMINANDO:
+            return "CAMINANDO";
+        case ESTADO_CAIDA:
+            return "CAIDA";
+        default:
+            return "PARADO";
+    }
+}
+
+/**
+ * @brief Clasifica actividad fusionando IMU y touch con histéresis temporal.
+ * @details Detecta caída mediante secuencia libre-vuelo→impacto. Clasifica postura
+ * por eje gravitacional dominante (sin calibración de referencia).
+ */
+static estado_actividad_t clasificar_actividad_fusionada(float ax_g, float ay_g, float az_g,
+                                                         float gx_dps, float gy_dps, float gz_dps,
+                                                         uint16_t touch_raw, uint16_t touch_filtrado,
+                                                         bool touch_activo)
+{
+    (void)touch_raw;
+
+    // --- Detector de caída en dos fases: libre-vuelo → impacto ---
+    static bool libre_vuelo = false;
+    static TickType_t tick_libre_vuelo = 0;
+    static TickType_t tick_ultima_caida = 0;
+
+    // --- Contadores de histéresis para marcha y reposo ---
+    static uint32_t contador_marcha = 0;
+    static uint32_t contador_reposo = 0;
+    static estado_actividad_t ultimo_estado = ESTADO_PARADO;
+
+    // --- Filtro LP lento para detectar dinámica de aceleración ---
+    static float acc_mag_lp = 1.0f;
+
+    const TickType_t ahora = xTaskGetTickCount();
+    const float acc_mag   = sqrtf((ax_g * ax_g) + (ay_g * ay_g) + (az_g * az_g));
+    const float gyro_mag  = sqrtf((gx_dps * gx_dps) + (gy_dps * gy_dps) + (gz_dps * gz_dps));
+
+    acc_mag_lp = (0.92f * acc_mag_lp) + (0.08f * acc_mag);
+    const float acc_dinamica = fabsf(acc_mag - acc_mag_lp);
+
+    // --- Fase 1: libre vuelo (acc ≤ 0.30g indica caída libre real) ---
+    // La caminata mínima registrada es 0.37g, por lo que 0.30g separa caída de marcha.
+    if (acc_mag <= UMBRAL_G_LIBRE_VUELO) {
+        libre_vuelo = true;
+        tick_libre_vuelo = ahora;
+    }
+
+    // --- Fase 2: impacto tras libre vuelo (acc ≥ 2.0g dentro de la ventana) ---
+    if (libre_vuelo) {
+        const uint32_t ms_vuelo = (uint32_t)pdTICKS_TO_MS(ahora - tick_libre_vuelo);
+        if (ms_vuelo > VENTANA_LIBRE_VUELO_MS) {
+            libre_vuelo = false;
+        } else if (acc_mag >= UMBRAL_G_IMPACTO_ALTO) {
+            // Secuencia libre-vuelo → impacto confirmada = caída real
+            ESP_LOGI(TAG_MAIN, "CAIDA: impacto %.2fg tras libre-vuelo en %lums",
+                     acc_mag, (unsigned long)ms_vuelo);
+            tick_ultima_caida = ahora;
+            libre_vuelo = false;
+        }
+    }
+
+    // --- Retención del estado CAIDA (evita que el sistema lo cancele por movimiento) ---
+    if ((uint32_t)pdTICKS_TO_MS(ahora - tick_ultima_caida) <= RETENCION_CAIDA_MS) {
+        ultimo_estado = ESTADO_CAIDA;
+        return ESTADO_CAIDA;
+    }
+
+    // --- Detección de caminando: IMU-primario, touch opcional ---
+    bool caminar_por_imu          = (acc_dinamica > UMBRAL_MOV_DINAMICO) && (gyro_mag > UMBRAL_GYRO_CAMINANDO);
+    bool caminar_reforzado_touch  = touch_activo && (touch_filtrado >= TOUCH_UMBRAL_ON)
+                                    && (acc_dinamica > (UMBRAL_MOV_DINAMICO * 0.70f));
+    bool caminar_valido = caminar_por_imu || caminar_reforzado_touch;
+
+    if (caminar_valido) {
+        if (contador_marcha < (MUESTRAS_CAMINANDO + 2U)) { contador_marcha++; }
+        contador_reposo = 0;
+    } else {
+        if (contador_marcha > 0U)                         { contador_marcha--; }
+        if (contador_reposo < (MUESTRAS_REPOSO + 2U))    { contador_reposo++; }
+    }
+
+    if (contador_marcha >= MUESTRAS_CAMINANDO) {
+        ultimo_estado = ESTADO_CAMINANDO;
+        return ESTADO_CAMINANDO;
+    }
+
+    // --- Clasificación de postura por eje gravitacional dominante ---
+    // No requiere calibración de referencia. Se basa en qué eje del acelerómetro
+    // lleva la mayor parte del vector gravedad (≥0.80g de magnitud ≈80% de 1g).
+    // UMBRAL_GYRO_POSTURA (20 dps) es mayor que el bias típico del giroscopio (~15 dps)
+    // para que ACOSTADO se detecte correctamente aunque haya derivas angulares.
+    if (contador_reposo >= MUESTRAS_REPOSO &&
+        gyro_mag < UMBRAL_GYRO_POSTURA &&
+        acc_dinamica < 0.12f)
+    {
+        const float ax_abs = fabsf(ax_g);
+        const float ay_abs = fabsf(ay_g);
+        const float az_abs = fabsf(az_g);
+
+        if (az_abs >= UMBRAL_EJE_Z_ACOSTADO) {
+            // Eje Z lleva la gravedad → dispositivo horizontal → acostado
+            ultimo_estado = ESTADO_ACOSTADO;
+            return ESTADO_ACOSTADO;
+        }
+        if (ax_abs >= UMBRAL_EJE_Z_ACOSTADO || ay_abs >= UMBRAL_EJE_Z_ACOSTADO) {
+            // Eje X o Y lleva la gravedad → dispositivo vertical → de pie
+            ultimo_estado = ESTADO_PARADO;
+            return ESTADO_PARADO;
+        }
+    }
+
+    return ultimo_estado;
+}
+
 // --- Lee el voltaje de la batería usando el conversor analógico-digital (ADC) ---
 // El ADC mide el voltaje en el pin GPIO y lo devuelve en milivoltios (mV)
 // Un divisor de voltaje externo reduce el voltaje real a un tercio (FACTOR_BATERIA = 3)
@@ -730,6 +936,10 @@ static void tarea_captura(void *parametro)
     datos_imu_t medicion = {};                  // Lectura del IMU de este ciclo
     angulos_t angulos_locales = {};             // Ángulos acumulados por el filtro
     TickType_t instante_anterior = xTaskGetTickCount(); // Marca de tiempo de inicio (para delay preciso)
+    float touch_lp = 0.0f;
+    bool touch_filtro_inicializado = false;
+    bool touch_activo = false;
+    uint32_t contador_log = 0;
 
     for (;;) { // Bucle infinito: la tarea nunca termina
         if (imu_leer_datos(&medicion) == ESP_OK) { // Lee el IMU; si hay error salta el ciclo
@@ -739,8 +949,30 @@ static void tarea_captura(void *parametro)
 
             float bateria = bateria_leer_voltios(); // Lee voltaje de batería (solo para mostrar en pantalla)
 
-            // Prepara el paquete de 32 bytes que se enviará por radio
-            paquete_espnow_t paquete_local = {};
+            uint16_t touch_raw = touch_leer_raw_capacitivo();
+            if (!touch_filtro_inicializado) {
+                touch_lp = (float)touch_raw;
+                touch_filtro_inicializado = true;
+            } else {
+                touch_lp = (TOUCH_FILTRO_ALPHA * touch_lp) + ((1.0f - TOUCH_FILTRO_ALPHA) * (float)touch_raw);
+            }
+            uint16_t touch_filtrado = (uint16_t)(touch_lp + 0.5f);
+
+            if (touch_activo) {
+                if (touch_filtrado < TOUCH_UMBRAL_OFF) {
+                    touch_activo = false;
+                }
+            } else if (touch_filtrado > TOUCH_UMBRAL_ON) {
+                touch_activo = true;
+            }
+
+            estado_actividad_t estado = clasificar_actividad_fusionada(
+                medicion.accel_x, medicion.accel_y, medicion.accel_z,
+                medicion.gyro_x, medicion.gyro_y, medicion.gyro_z,
+                touch_raw, touch_filtrado, touch_activo);
+
+            // Prepara el paquete de 40 bytes que se enviará por radio
+            datos_mpu_touch_t paquete_local = {};
             paquete_local.roll  = angulos_locales.alabeo;  // Ángulo de inclinación lateral en grados
             paquete_local.pitch = angulos_locales.cabeceo; // Ángulo de inclinación frontal en grados
             paquete_local.acc_x = medicion.accel_x;        // Aceleración X en g
@@ -749,6 +981,12 @@ static void tarea_captura(void *parametro)
             paquete_local.gyr_x = medicion.gyro_x;         // Velocidad angular X en °/s
             paquete_local.gyr_y = medicion.gyro_y;         // Velocidad angular Y en °/s
             paquete_local.gyr_z = medicion.gyro_z;         // Velocidad angular Z en °/s
+            paquete_local.touch_raw = touch_raw;
+            paquete_local.touch_filtrado = touch_filtrado;
+            paquete_local.estado = (uint8_t)estado;
+            paquete_local.version = 1U;
+            paquete_local.reservado[0] = 0U;
+            paquete_local.reservado[1] = 0U;
 
             // Toma el mutex (candado) para escribir en las variables globales compartidas
             // Espera máximo 10 ms; si no consigue el candado, salta la escritura global este ciclo
@@ -756,11 +994,25 @@ static void tarea_captura(void *parametro)
                 g_datos_imu = medicion;        // Actualiza los datos globales del IMU
                 g_angulos   = angulos_locales; // Actualiza los ángulos globales
                 g_paquete   = paquete_local;   // Actualiza el paquete global
+                g_touch_raw = touch_raw;
+                g_touch_filtrado = touch_filtrado;
+                g_estado_actividad = estado;
                 g_bateria_v = bateria;         // Actualiza el voltaje de batería global
                 xSemaphoreGive(g_mutex_datos); // Libera el candado para que la tarea de interfaz pueda leer
             }
 
-            // Envía el paquete por radio ESP-NOW al receptor (32 bytes)
+            contador_log++;
+            if ((contador_log % 5U) == 0U) {
+                ESP_LOGI(TAG_MAIN,
+                         "Acc=[%+.3f,%+.3f,%+.3f] Gyr=[%+.1f,%+.1f,%+.1f] TouchRaw=%u TouchFiltrado=%u Roll=%+.1f Pitch=%+.1f Estado=%s",
+                         (double)medicion.accel_x, (double)medicion.accel_y, (double)medicion.accel_z,
+                         (double)medicion.gyro_x, (double)medicion.gyro_y, (double)medicion.gyro_z,
+                         (unsigned)touch_raw, (unsigned)touch_filtrado,
+                         (double)angulos_locales.alabeo, (double)angulos_locales.cabeceo,
+                         texto_estado_actividad(estado));
+            }
+
+            // Envía el paquete por radio ESP-NOW al receptor (40 bytes)
             // Funciona SIEMPRE, sin importar si la pantalla está encendida o apagada
             esp_now_send(MAC_DESTINO, (const uint8_t *)&paquete_local, sizeof(paquete_local));
         }
@@ -780,6 +1032,9 @@ static void tarea_interfaz(void *parametro)
     (void)parametro;                             // Parámetro no usado
     datos_imu_t datos_copia   = {};              // Copia local de los datos IMU
     angulos_t   angulos_copia = {};              // Copia local de los ángulos
+    uint16_t    touch_raw_copia = 0;
+    uint16_t    touch_filtrado_copia = 0;
+    estado_actividad_t estado_copia = ESTADO_PARADO;
     float       bateria_copia = 0.0f;            // Copia local del voltaje de batería
     TickType_t  instante_anterior = xTaskGetTickCount(); // Marca de tiempo para delay preciso
     bool        pantalla_encendida = true;       // Estado actual de la retroiluminación
@@ -802,7 +1057,9 @@ static void tarea_interfaz(void *parametro)
     pantalla_dibujar_texto(20, 152, "GYR_X =",         COLOR_BLANCO, 0xAD55, 1);
     pantalla_dibujar_texto(20, 168, "GYR_Y =",         COLOR_BLANCO, 0xAD55, 1);
     pantalla_dibujar_texto(20, 184, "GYR_Z =",         COLOR_BLANCO, 0xAD55, 1);
-    pantalla_dibujar_texto(57, 208, "BAT(V)=",         COLOR_BLANCO, 0x2595, 2); // Escala 2 = doble tamaño
+    pantalla_dibujar_texto(10, 200, "BAT(V)=",         COLOR_BLANCO, 0x2595, 1);
+    pantalla_dibujar_texto(10, 214, "ESTADO=",         COLOR_BLANCO, 0x2595, 1);
+    pantalla_dibujar_texto(10, 228, "TOUCH=",          COLOR_BLANCO, 0x2595, 1);
 
     for (;;) { // Bucle infinito: la tarea nunca termina
 
@@ -837,6 +1094,9 @@ static void tarea_interfaz(void *parametro)
         if (xSemaphoreTake(g_mutex_datos, pdMS_TO_TICKS(10)) == pdTRUE) {
             datos_copia   = g_datos_imu;  // Copia los datos IMU actuales
             angulos_copia = g_angulos;    // Copia los ángulos actuales
+            touch_raw_copia = g_touch_raw;
+            touch_filtrado_copia = g_touch_filtrado;
+            estado_copia = g_estado_actividad;
             bateria_copia = g_bateria_v;  // Copia el voltaje de batería
             xSemaphoreGive(g_mutex_datos); // Libera el candado
         }
@@ -850,7 +1110,9 @@ static void tarea_interfaz(void *parametro)
         pantalla_rellenar_rect(112, 152, 220, 160, 0xAD55); // Borra área del valor GYR_X
         pantalla_rellenar_rect(112, 168, 220, 176, 0xAD55); // Borra área del valor GYR_Y
         pantalla_rellenar_rect(112, 184, 220, 192, 0xAD55); // Borra área del valor GYR_Z
-        pantalla_rellenar_rect(130, 200, 220, 214, 0x2595); // Borra área del valor BAT
+        pantalla_rellenar_rect(90, 200, 220, 210, 0x2595);  // Borra área del valor BAT
+        pantalla_rellenar_rect(90, 214, 220, 224, 0x2595);  // Borra área del valor ESTADO
+        pantalla_rellenar_rect(90, 228, 220, 238, 0x2595);  // Borra área del valor TOUCH
 
         // ---- Dibuja los valores numéricos actualizados ----
         // snprintf formatea el número como texto; "%+6.1f" = con signo, 6 caracteres, 1 decimal
@@ -878,8 +1140,14 @@ static void tarea_interfaz(void *parametro)
         snprintf(linea, sizeof(linea), "%+06.1f", (double)datos_copia.gyro_z);
         pantalla_dibujar_texto(112, 184, linea, COLOR_BLANCO, 0xAD55, 1); // Muestra GYR_Z
 
-        snprintf(linea, sizeof(linea), "%1.2f", (double)bateria_copia);   // Sin signo, 2 decimales
-        pantalla_dibujar_texto(130, 200, linea, COLOR_BLANCO, 0x2595, 2); // Muestra voltaje batería (escala 2)
+        snprintf(linea, sizeof(linea), "%1.2f", (double)bateria_copia);
+        pantalla_dibujar_texto(90, 200, linea, COLOR_BLANCO, 0x2595, 1);
+
+        uint16_t color_estado = (estado_copia == ESTADO_CAIDA) ? 0xF800 : COLOR_BLANCO;
+        pantalla_dibujar_texto(90, 214, texto_estado_actividad(estado_copia), color_estado, 0x2595, 1);
+
+        snprintf(linea, sizeof(linea), "%u/%u", (unsigned)touch_raw_copia, (unsigned)touch_filtrado_copia);
+        pantalla_dibujar_texto(90, 228, linea, COLOR_BLANCO, 0x2595, 1);
 
         vTaskDelayUntil(&instante_anterior, pdMS_TO_TICKS(50)); // Espera hasta completar 50 ms
     }
@@ -891,6 +1159,7 @@ static void tarea_interfaz(void *parametro)
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG_MAIN, "Iniciando monitor de salud ESP32-S3"); // Primer mensaje en el monitor serie
+    ESP_LOGI(TAG_MAIN, "Payload ESP-NOW tamano=%u bytes version=%u", (unsigned)sizeof(datos_mpu_touch_t), 1U);
 
     // ---- Configuración de gestión de energía ----
     // Permite al CPU reducir su frecuencia a 40 MHz cuando no hay carga, ahorrando batería
