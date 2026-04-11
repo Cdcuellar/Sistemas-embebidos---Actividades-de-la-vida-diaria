@@ -1,0 +1,841 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.16.1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>sta_wifi: Referencia del archivo main.c</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="clipboard.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">sta_wifi
+   </div>
+   <div id="projectbrief">ESP32 en modo STA que envia solicitudes HTTP GET a un servidor PHP local</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Generado por Doxygen 1.16.1 -->
+<script type="text/javascript">
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+</script>
+<script type="text/javascript">
+$(function() { codefold.init(); });
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+$(function() {
+  initMenu('',true,false,'search.php','Buscar',true);
+  $(function() { init_search(); });
+});
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+$(function(){initNavTree('main_8c.html','',''); });
+</script>
+<div id="container">
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Cargando...</div>
+<div class="SRStatus" id="Searching">Buscando...</div>
+<div class="SRStatus" id="NoMatches">Nada coincide</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">Referencia del archivo main.c</div></div>
+</div><!--header-->
+<div class="contents">
+
+<p>Cliente STA de ESP32 que envia solicitudes HTTP GET a un servidor PHP local.  
+<a href="#details">Más...</a></p>
+
+<p><a href="main_8c_source.html">Ir al código fuente de este archivo.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
+defines</h2></td></tr>
+<tr class="memitem:ad552e7688532cbbecd3967538ced06ac" id="r_ad552e7688532cbbecd3967538ced06ac"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#ad552e7688532cbbecd3967538ced06ac">WIFI_CONNECTED_BIT</a>&#160;&#160;&#160;BIT0</td></tr>
+<tr id="define-members-0" class="groupHeader"><td colspan="2"><div class="groupHeader">Configuracion del proyecto</div></td></tr>
+<tr class="memitem:a586542b79d00e4db7e1d5a667ae83a2b" id="r_a586542b79d00e4db7e1d5a667ae83a2b"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a586542b79d00e4db7e1d5a667ae83a2b">WIFI_SSID</a>&#160;&#160;&#160;&quot;AQUI_TU_WIFI&quot;</td></tr>
+<tr class="memdesc:a586542b79d00e4db7e1d5a667ae83a2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">SSID de la red WiFi a la que se conecta el ESP32.  <br /></td></tr>
+<tr class="memitem:a8685d8aff7e570048090a3a51afceb07" id="r_a8685d8aff7e570048090a3a51afceb07"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a8685d8aff7e570048090a3a51afceb07">WIFI_PASSWORD</a>&#160;&#160;&#160;&quot;AQUI_TU_CLAVE&quot;</td></tr>
+<tr class="memdesc:a8685d8aff7e570048090a3a51afceb07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clave de la red WiFi.  <br /></td></tr>
+<tr class="memitem:a7eca0c756bccd03ac1d05fd1a81e2600" id="r_a7eca0c756bccd03ac1d05fd1a81e2600"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a7eca0c756bccd03ac1d05fd1a81e2600">SERVER_HOST</a>&#160;&#160;&#160;&quot;aqui la direccion ip&quot;</td></tr>
+<tr class="memdesc:a7eca0c756bccd03ac1d05fd1a81e2600"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direccion IPv4 de la PC donde esta Apache/XAMPP.  <br /></td></tr>
+<tr class="memitem:ac42367fe5c999ec6650de83e9d72fe8c" id="r_ac42367fe5c999ec6650de83e9d72fe8c"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#ac42367fe5c999ec6650de83e9d72fe8c">SERVER_PORT</a>&#160;&#160;&#160;80</td></tr>
+<tr class="memdesc:ac42367fe5c999ec6650de83e9d72fe8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Puerto HTTP del servidor local.  <br /></td></tr>
+<tr class="memitem:a6312573a3fccab201c412ad9ba7bafe6" id="r_a6312573a3fccab201c412ad9ba7bafe6"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a6312573a3fccab201c412ad9ba7bafe6">SERVER_PATH</a>&#160;&#160;&#160;&quot;/sta/&quot;</td></tr>
+<tr class="memdesc:a6312573a3fccab201c412ad9ba7bafe6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ruta base del proyecto dentro de htdocs.  <br /></td></tr>
+<tr class="memitem:a7939dd892f4cb392039f5c01367987b6" id="r_a7939dd892f4cb392039f5c01367987b6"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a7939dd892f4cb392039f5c01367987b6">REQUEST_MESSAGE</a>&#160;&#160;&#160;&quot;hola mundo&quot;</td></tr>
+<tr class="memdesc:a7939dd892f4cb392039f5c01367987b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mensaje enviado por la ESP32 al parametro mensaje.  <br /></td></tr>
+<tr class="memitem:a9b7f252b1e7585d17d78287b7b55c214" id="r_a9b7f252b1e7585d17d78287b7b55c214"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a9b7f252b1e7585d17d78287b7b55c214">HTTP_REQUEST_INTERVAL_MS</a>&#160;&#160;&#160;5000</td></tr>
+<tr class="memdesc:a9b7f252b1e7585d17d78287b7b55c214"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tiempo de espera entre solicitudes HTTP periodicas.  <br /></td></tr>
+<tr class="memitem:a0b08432e3d84621c28ff812b51075e60" id="r_a0b08432e3d84621c28ff812b51075e60"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a0b08432e3d84621c28ff812b51075e60">HTTP_BUFFER_SIZE</a>&#160;&#160;&#160;1024</td></tr>
+<tr class="memdesc:a0b08432e3d84621c28ff812b51075e60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tamano maximo del buffer usado para leer la respuesta HTTP.  <br /></td></tr>
+<tr class="memitem:a5d1a70326bfe9072952034121d4346fc" id="r_a5d1a70326bfe9072952034121d4346fc"><td class="memItemLeft">#define&#160;</td><td class="memItemRight"><a class="el" href="#a5d1a70326bfe9072952034121d4346fc">REQUEST_ENCODED_MAX_LEN</a>&#160;&#160;&#160;192</td></tr>
+<tr class="memdesc:a5d1a70326bfe9072952034121d4346fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Longitud maxima del mensaje codificado para la URL.  <br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
+Funciones</h2></td></tr>
+<tr class="memitem:a85171b10b74aeee697cc2312ca1dbe02" id="r_a85171b10b74aeee697cc2312ca1dbe02"><td class="memItemLeft">static bool&#160;</td><td class="memItemRight"><a class="el" href="#a85171b10b74aeee697cc2312ca1dbe02">is_url_unreserved</a> (char c)</td></tr>
+<tr class="memdesc:a85171b10b74aeee697cc2312ca1dbe02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retorna true si el caracter no necesita codificacion URL.  <br /></td></tr>
+<tr class="memitem:a3f18ac58b7da1e883a0d61e2397c2eda" id="r_a3f18ac58b7da1e883a0d61e2397c2eda"><td class="memItemLeft">static void&#160;</td><td class="memItemRight"><a class="el" href="#a3f18ac58b7da1e883a0d61e2397c2eda">url_encode</a> (const char *src, char *dst, size_t dst_size)</td></tr>
+<tr class="memdesc:a3f18ac58b7da1e883a0d61e2397c2eda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Codifica texto para usarlo como valor de query (?mensaje=...).  <br /></td></tr>
+<tr class="memitem:a3476ef27bd30a755358351285c9dc9ee" id="r_a3476ef27bd30a755358351285c9dc9ee"><td class="memItemLeft">static void&#160;</td><td class="memItemRight"><a class="el" href="#a3476ef27bd30a755358351285c9dc9ee">log_visible_aps</a> (void)</td></tr>
+<tr class="memdesc:a3476ef27bd30a755358351285c9dc9ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Escanea APs visibles y los imprime en el monitor serial.  <br /></td></tr>
+<tr class="memitem:ac6788ac9703c2cf01912a26ab8f1f835" id="r_ac6788ac9703c2cf01912a26ab8f1f835"><td class="memItemLeft">static char *&#160;</td><td class="memItemRight"><a class="el" href="#ac6788ac9703c2cf01912a26ab8f1f835">trim_whitespace</a> (char *str)</td></tr>
+<tr class="memdesc:ac6788ac9703c2cf01912a26ab8f1f835"><td class="mdescLeft">&#160;</td><td class="mdescRight">Elimina espacios al inicio y al final de una cadena.  <br /></td></tr>
+<tr class="memitem:ab28a5a729086a5621f5b563588d6b1d9" id="r_ab28a5a729086a5621f5b563588d6b1d9"><td class="memItemLeft">static bool&#160;</td><td class="memItemRight"><a class="el" href="#ab28a5a729086a5621f5b563588d6b1d9">extract_json_value</a> (const char *payload, const char *key, char *output, size_t output_size)</td></tr>
+<tr class="memdesc:ab28a5a729086a5621f5b563588d6b1d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extrae el valor de una clave JSON usando parseo simple de texto.  <br /></td></tr>
+<tr class="memitem:a30712044786dce7718f3a9ae68ffcad9" id="r_a30712044786dce7718f3a9ae68ffcad9"><td class="memItemLeft">static void&#160;</td><td class="memItemRight"><a class="el" href="#a30712044786dce7718f3a9ae68ffcad9">procesar_respuesta</a> (const char *payload)</td></tr>
+<tr class="memdesc:a30712044786dce7718f3a9ae68ffcad9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Procesa la respuesta del servidor e imprime el valor extraido.  <br /></td></tr>
+<tr class="memitem:ac31e38637f7a5e5c8ce4d033b0955fec" id="r_ac31e38637f7a5e5c8ce4d033b0955fec"><td class="memItemLeft">static void&#160;</td><td class="memItemRight"><a class="el" href="#ac31e38637f7a5e5c8ce4d033b0955fec">wifi_event_handler</a> (void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)</td></tr>
+<tr class="memdesc:ac31e38637f7a5e5c8ce4d033b0955fec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maneja eventos de WiFi e IP.  <br /></td></tr>
+<tr class="memitem:a3160fbc0f9328cef19a9c5aa26f85dd7" id="r_a3160fbc0f9328cef19a9c5aa26f85dd7"><td class="memItemLeft">static void&#160;</td><td class="memItemRight"><a class="el" href="#a3160fbc0f9328cef19a9c5aa26f85dd7">wifi_init_sta</a> (void)</td></tr>
+<tr class="memdesc:a3160fbc0f9328cef19a9c5aa26f85dd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inicializa ESP32 en modo STA e inicia el flujo de conexion.  <br /></td></tr>
+<tr class="memitem:a82fbe083702dac0fae9cb0661323e4fa" id="r_a82fbe083702dac0fae9cb0661323e4fa"><td class="memItemLeft">static bool&#160;</td><td class="memItemRight"><a class="el" href="#a82fbe083702dac0fae9cb0661323e4fa">is_wifi_connected</a> (void)</td></tr>
+<tr class="memdesc:a82fbe083702dac0fae9cb0661323e4fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verifica si el bit de conexion WiFi esta activo.  <br /></td></tr>
+<tr class="memitem:a5a75b796d8db99551bd769c1196b583f" id="r_a5a75b796d8db99551bd769c1196b583f"><td class="memItemLeft">static esp_err_t&#160;</td><td class="memItemRight"><a class="el" href="#a5a75b796d8db99551bd769c1196b583f">send_http_request</a> (void)</td></tr>
+<tr class="memdesc:a5a75b796d8db99551bd769c1196b583f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Envia una solicitud HTTP GET y procesa el payload de respuesta.  <br /></td></tr>
+<tr class="memitem:a630544a7f0a2cc40d8a7fefab7e2fe70" id="r_a630544a7f0a2cc40d8a7fefab7e2fe70"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a630544a7f0a2cc40d8a7fefab7e2fe70">app_main</a> (void)</td></tr>
+<tr class="memdesc:a630544a7f0a2cc40d8a7fefab7e2fe70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Punto de entrada de la aplicacion.  <br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-var-members" class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a5a85b9c772bbeb480b209a3e6ea92b4c" id="r_a5a85b9c772bbeb480b209a3e6ea92b4c"><td class="memItemLeft">static const char *&#160;</td><td class="memItemRight"><a class="el" href="#a5a85b9c772bbeb480b209a3e6ea92b4c">TAG</a> = &quot;STA_HTTP&quot;</td></tr>
+<tr class="memitem:a6aaca350cca4b3d105d88a6f399cb381" id="r_a6aaca350cca4b3d105d88a6f399cb381"><td class="memItemLeft">static EventGroupHandle_t&#160;</td><td class="memItemRight"><a class="el" href="#a6aaca350cca4b3d105d88a6f399cb381">s_wifi_event_group</a></td></tr>
+</table>
+<a name="details" id="details"></a><h2 id="header-details" class="groupheader">Descripción detallada</h2>
+<div class="textblock"><p>Cliente STA de ESP32 que envia solicitudes HTTP GET a un servidor PHP local. </p>
+<dl class="section author"><dt>Autor</dt><dd>Daniel </dd></dl>
+
+<p class="definition">Definición en el archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+</div><a name="doc-define-members" id="doc-define-members"></a><h2 id="header-doc-define-members" class="groupheader">Documentación de «define»</h2>
+<a id="a0b08432e3d84621c28ff812b51075e60" name="a0b08432e3d84621c28ff812b51075e60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b08432e3d84621c28ff812b51075e60">&#9670;&#160;</a></span>HTTP_BUFFER_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define HTTP_BUFFER_SIZE&#160;&#160;&#160;1024</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Tamano maximo del buffer usado para leer la respuesta HTTP. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00046">46</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="a9b7f252b1e7585d17d78287b7b55c214" name="a9b7f252b1e7585d17d78287b7b55c214"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b7f252b1e7585d17d78287b7b55c214">&#9670;&#160;</a></span>HTTP_REQUEST_INTERVAL_MS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define HTTP_REQUEST_INTERVAL_MS&#160;&#160;&#160;5000</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Tiempo de espera entre solicitudes HTTP periodicas. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00044">44</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00410">app_main()</a>.</p>
+
+</div>
+</div>
+<a id="a5d1a70326bfe9072952034121d4346fc" name="a5d1a70326bfe9072952034121d4346fc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d1a70326bfe9072952034121d4346fc">&#9670;&#160;</a></span>REQUEST_ENCODED_MAX_LEN</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define REQUEST_ENCODED_MAX_LEN&#160;&#160;&#160;192</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Longitud maxima del mensaje codificado para la URL. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00048">48</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="a7939dd892f4cb392039f5c01367987b6" name="a7939dd892f4cb392039f5c01367987b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7939dd892f4cb392039f5c01367987b6">&#9670;&#160;</a></span>REQUEST_MESSAGE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define REQUEST_MESSAGE&#160;&#160;&#160;&quot;hola mundo&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Mensaje enviado por la ESP32 al parametro mensaje. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00041">41</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="a7eca0c756bccd03ac1d05fd1a81e2600" name="a7eca0c756bccd03ac1d05fd1a81e2600"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7eca0c756bccd03ac1d05fd1a81e2600">&#9670;&#160;</a></span>SERVER_HOST</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SERVER_HOST&#160;&#160;&#160;&quot;aqui la direccion ip&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Direccion IPv4 de la PC donde esta Apache/XAMPP. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00035">35</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="a6312573a3fccab201c412ad9ba7bafe6" name="a6312573a3fccab201c412ad9ba7bafe6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6312573a3fccab201c412ad9ba7bafe6">&#9670;&#160;</a></span>SERVER_PATH</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SERVER_PATH&#160;&#160;&#160;&quot;/sta/&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Ruta base del proyecto dentro de htdocs. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00039">39</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="ac42367fe5c999ec6650de83e9d72fe8c" name="ac42367fe5c999ec6650de83e9d72fe8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac42367fe5c999ec6650de83e9d72fe8c">&#9670;&#160;</a></span>SERVER_PORT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SERVER_PORT&#160;&#160;&#160;80</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Puerto HTTP del servidor local. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00037">37</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="ad552e7688532cbbecd3967538ced06ac" name="ad552e7688532cbbecd3967538ced06ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad552e7688532cbbecd3967538ced06ac">&#9670;&#160;</a></span>WIFI_CONNECTED_BIT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define WIFI_CONNECTED_BIT&#160;&#160;&#160;BIT0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00052">52</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00337">is_wifi_connected()</a> y <a class="el" href="main_8c_source.html#l00259">wifi_event_handler()</a>.</p>
+
+</div>
+</div>
+<a id="a8685d8aff7e570048090a3a51afceb07" name="a8685d8aff7e570048090a3a51afceb07"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8685d8aff7e570048090a3a51afceb07">&#9670;&#160;</a></span>WIFI_PASSWORD</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define WIFI_PASSWORD&#160;&#160;&#160;&quot;AQUI_TU_CLAVE&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clave de la red WiFi. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00031">31</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00281">wifi_init_sta()</a>.</p>
+
+</div>
+</div>
+<a id="a586542b79d00e4db7e1d5a667ae83a2b" name="a586542b79d00e4db7e1d5a667ae83a2b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a586542b79d00e4db7e1d5a667ae83a2b">&#9670;&#160;</a></span>WIFI_SSID</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define WIFI_SSID&#160;&#160;&#160;&quot;AQUI_TU_WIFI&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>SSID de la red WiFi a la que se conecta el ESP32. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00029">29</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00102">log_visible_aps()</a> y <a class="el" href="main_8c_source.html#l00281">wifi_init_sta()</a>.</p>
+
+</div>
+</div>
+<a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Documentación de funciones</h2>
+<a id="a630544a7f0a2cc40d8a7fefab7e2fe70" name="a630544a7f0a2cc40d8a7fefab7e2fe70"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a630544a7f0a2cc40d8a7fefab7e2fe70">&#9670;&#160;</a></span>app_main()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void app_main </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Punto de entrada de la aplicacion. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00410">410</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00044">HTTP_REQUEST_INTERVAL_MS</a>, <a class="el" href="main_8c_source.html#l00337">is_wifi_connected()</a>, <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>, <a class="el" href="main_8c_source.html#l00023">TAG</a> y <a class="el" href="main_8c_source.html#l00281">wifi_init_sta()</a>.</p>
+
+</div>
+</div>
+<a id="ab28a5a729086a5621f5b563588d6b1d9" name="ab28a5a729086a5621f5b563588d6b1d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab28a5a729086a5621f5b563588d6b1d9">&#9670;&#160;</a></span>extract_json_value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool extract_json_value </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>payload</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>key</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>output</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>output_size</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Extrae el valor de una clave JSON usando parseo simple de texto. </p>
+<dl class="params"><dt>Parámetros</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">payload</td><td>Texto del cuerpo de respuesta. </td></tr>
+    <tr><td class="paramname">key</td><td>Clave JSON a buscar, por ejemplo "\"valor\"". </td></tr>
+    <tr><td class="paramname">output</td><td>Buffer destino. </td></tr>
+    <tr><td class="paramname">output_size</td><td>Tamano del buffer destino. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Devuelve</dt><dd>true si se extrajo un valor, false en caso contrario. </dd></dl>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00173">173</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00144">trim_whitespace()</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00225">procesar_respuesta()</a>.</p>
+
+</div>
+</div>
+<a id="a85171b10b74aeee697cc2312ca1dbe02" name="a85171b10b74aeee697cc2312ca1dbe02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a85171b10b74aeee697cc2312ca1dbe02">&#9670;&#160;</a></span>is_url_unreserved()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool is_url_unreserved </td>
+          <td>(</td>
+          <td class="paramtype">char</td>          <td class="paramname"><span class="paramname"><em>c</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Retorna true si el caracter no necesita codificacion URL. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00057">57</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00068">url_encode()</a>.</p>
+
+</div>
+</div>
+<a id="a82fbe083702dac0fae9cb0661323e4fa" name="a82fbe083702dac0fae9cb0661323e4fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a82fbe083702dac0fae9cb0661323e4fa">&#9670;&#160;</a></span>is_wifi_connected()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool is_wifi_connected </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Verifica si el bit de conexion WiFi esta activo. </p>
+<dl class="section return"><dt>Devuelve</dt><dd>true si esta conectado y tiene IP, false en caso contrario. </dd></dl>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00337">337</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00051">s_wifi_event_group</a> y <a class="el" href="main_8c_source.html#l00052">WIFI_CONNECTED_BIT</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00410">app_main()</a>.</p>
+
+</div>
+</div>
+<a id="a3476ef27bd30a755358351285c9dc9ee" name="a3476ef27bd30a755358351285c9dc9ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3476ef27bd30a755358351285c9dc9ee">&#9670;&#160;</a></span>log_visible_aps()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void log_visible_aps </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Escanea APs visibles y los imprime en el monitor serial. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00102">102</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00023">TAG</a> y <a class="el" href="main_8c_source.html#l00029">WIFI_SSID</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00281">wifi_init_sta()</a>.</p>
+
+</div>
+</div>
+<a id="a30712044786dce7718f3a9ae68ffcad9" name="a30712044786dce7718f3a9ae68ffcad9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30712044786dce7718f3a9ae68ffcad9">&#9670;&#160;</a></span>procesar_respuesta()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void procesar_respuesta </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>payload</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Procesa la respuesta del servidor e imprime el valor extraido. </p>
+<dl class="params"><dt>Parámetros</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">payload</td><td>Texto del cuerpo HTTP recibido. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00225">225</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00173">extract_json_value()</a>, <a class="el" href="main_8c_source.html#l00023">TAG</a> y <a class="el" href="main_8c_source.html#l00144">trim_whitespace()</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="a5a75b796d8db99551bd769c1196b583f" name="a5a75b796d8db99551bd769c1196b583f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a75b796d8db99551bd769c1196b583f">&#9670;&#160;</a></span>send_http_request()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">esp_err_t send_http_request </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Envia una solicitud HTTP GET y procesa el payload de respuesta. </p>
+<dl class="section return"><dt>Devuelve</dt><dd>ESP_OK en exito, codigo de error en otro caso. </dd></dl>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00346">346</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00046">HTTP_BUFFER_SIZE</a>, <a class="el" href="main_8c_source.html#l00225">procesar_respuesta()</a>, <a class="el" href="main_8c_source.html#l00048">REQUEST_ENCODED_MAX_LEN</a>, <a class="el" href="main_8c_source.html#l00041">REQUEST_MESSAGE</a>, <a class="el" href="main_8c_source.html#l00035">SERVER_HOST</a>, <a class="el" href="main_8c_source.html#l00039">SERVER_PATH</a>, <a class="el" href="main_8c_source.html#l00037">SERVER_PORT</a>, <a class="el" href="main_8c_source.html#l00023">TAG</a> y <a class="el" href="main_8c_source.html#l00068">url_encode()</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00410">app_main()</a>.</p>
+
+</div>
+</div>
+<a id="ac6788ac9703c2cf01912a26ab8f1f835" name="ac6788ac9703c2cf01912a26ab8f1f835"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6788ac9703c2cf01912a26ab8f1f835">&#9670;&#160;</a></span>trim_whitespace()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">char * trim_whitespace </td>
+          <td>(</td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>str</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Elimina espacios al inicio y al final de una cadena. </p>
+<dl class="params"><dt>Parámetros</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>Cadena C mutable. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Devuelve</dt><dd>Puntero al primer caracter no-espacio dentro del mismo buffer. </dd></dl>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00144">144</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00173">extract_json_value()</a> y <a class="el" href="main_8c_source.html#l00225">procesar_respuesta()</a>.</p>
+
+</div>
+</div>
+<a id="a3f18ac58b7da1e883a0d61e2397c2eda" name="a3f18ac58b7da1e883a0d61e2397c2eda"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f18ac58b7da1e883a0d61e2397c2eda">&#9670;&#160;</a></span>url_encode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void url_encode </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>src</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>dst</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>dst_size</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Codifica texto para usarlo como valor de query (?mensaje=...). </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00068">68</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00057">is_url_unreserved()</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>.</p>
+
+</div>
+</div>
+<a id="ac31e38637f7a5e5c8ce4d033b0955fec" name="ac31e38637f7a5e5c8ce4d033b0955fec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac31e38637f7a5e5c8ce4d033b0955fec">&#9670;&#160;</a></span>wifi_event_handler()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void wifi_event_handler </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>arg</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">esp_event_base_t</td>          <td class="paramname"><span class="paramname"><em>event_base</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int32_t</td>          <td class="paramname"><span class="paramname"><em>event_id</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>event_data</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Maneja eventos de WiFi e IP. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00259">259</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00051">s_wifi_event_group</a>, <a class="el" href="main_8c_source.html#l00023">TAG</a> y <a class="el" href="main_8c_source.html#l00052">WIFI_CONNECTED_BIT</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00281">wifi_init_sta()</a>.</p>
+
+</div>
+</div>
+<a id="a3160fbc0f9328cef19a9c5aa26f85dd7" name="a3160fbc0f9328cef19a9c5aa26f85dd7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3160fbc0f9328cef19a9c5aa26f85dd7">&#9670;&#160;</a></span>wifi_init_sta()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void wifi_init_sta </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Inicializa ESP32 en modo STA e inicia el flujo de conexion. </p>
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00281">281</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Hace referencia a <a class="el" href="main_8c_source.html#l00102">log_visible_aps()</a>, <a class="el" href="main_8c_source.html#l00051">s_wifi_event_group</a>, <a class="el" href="main_8c_source.html#l00023">TAG</a>, <a class="el" href="main_8c_source.html#l00259">wifi_event_handler()</a>, <a class="el" href="main_8c_source.html#l00031">WIFI_PASSWORD</a> y <a class="el" href="main_8c_source.html#l00029">WIFI_SSID</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00410">app_main()</a>.</p>
+
+</div>
+</div>
+<a name="doc-var-members" id="doc-var-members"></a><h2 id="header-doc-var-members" class="groupheader">Documentación de variables</h2>
+<a id="a6aaca350cca4b3d105d88a6f399cb381" name="a6aaca350cca4b3d105d88a6f399cb381"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6aaca350cca4b3d105d88a6f399cb381">&#9670;&#160;</a></span>s_wifi_event_group</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">EventGroupHandle_t s_wifi_event_group</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00051">51</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00337">is_wifi_connected()</a>, <a class="el" href="main_8c_source.html#l00259">wifi_event_handler()</a> y <a class="el" href="main_8c_source.html#l00281">wifi_init_sta()</a>.</p>
+
+</div>
+</div>
+<a id="a5a85b9c772bbeb480b209a3e6ea92b4c" name="a5a85b9c772bbeb480b209a3e6ea92b4c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a85b9c772bbeb480b209a3e6ea92b4c">&#9670;&#160;</a></span>TAG</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char* TAG = &quot;STA_HTTP&quot;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definición en la línea <a class="el" href="main_8c_source.html#l00023">23</a> del archivo <a class="el" href="main_8c_source.html">main.c</a>.</p>
+
+<p class="reference">Referenciado por <a class="el" href="main_8c_source.html#l00410">app_main()</a>, <a class="el" href="main_8c_source.html#l00102">log_visible_aps()</a>, <a class="el" href="main_8c_source.html#l00225">procesar_respuesta()</a>, <a class="el" href="main_8c_source.html#l00346">send_http_request()</a>, <a class="el" href="main_8c_source.html#l00259">wifi_event_handler()</a> y <a class="el" href="main_8c_source.html#l00281">wifi_init_sta()</a>.</p>
+
+</div>
+</div>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<div id="page-nav" class="page-nav-panel">
+<div id="page-nav-resize-handle"></div>
+<div id="page-nav-tree">
+<div id="page-nav-contents">
+</div><!-- page-nav-contents -->
+</div><!-- page-nav-tree -->
+</div><!-- page-nav -->
+</div><!-- container -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a href="dir_5c982d53a68cdbcd421152b4020263a9.html">main</a></li><li class="navelem"><a href="main_8c.html">main.c</a></li>
+    <li class="footer">Generado por <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.16.1 </li>
+  </ul>
+</div>
+</body>
+</html>
